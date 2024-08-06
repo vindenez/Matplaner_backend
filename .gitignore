@@ -1,5 +1,5 @@
 src/main/resources/application.properties
-
+src/main/java/com/example/tasterj/config/JWTAuthenticationFilter.java
 # Compiled class files
 *.class
 

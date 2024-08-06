@@ -17,7 +17,7 @@ import java.util.Collections;
 
 public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
 
-    private final String secret = "your-supabase-jwt-secret";
+    private final String secret = "NONE_OF_YOUR_BUISNESS";
 
     public JWTAuthenticationFilter() {
         super(authenticationManager -> null);
