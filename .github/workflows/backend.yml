@@ -1,54 +1,16 @@
-name: Backend CI/CD
-
+name: Heroku Deployment
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-
+    branches: [ main ]
 jobs:
   build:
+
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven
-
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
-
-      - name: Install Heroku CLI
-        run: curl https://cli-assets.heroku.com/install.sh | sh
-
-      - name: Set up Heroku credentials
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
-        run: |
-          echo "machine api.heroku.com" > ~/.netrc
-          echo "  login $HEROKU_EMAIL" >> ~/.netrc
-          echo "  password $HEROKU_API_KEY" >> ~/.netrc
-          echo "machine git.heroku.com" >> ~/.netrc
-          echo "  login $HEROKU_EMAIL" >> ~/.netrc
-          echo "  password $HEROKU_API_KEY" >> ~/.netrc
-
-      - name: Add Heroku remote
-        run: git remote add heroku https://git.heroku.com/tasterj.git
-
-      - name: Deploy to Heroku
-        run: git push heroku main --force
+        - uses: actions/checkout@v2
+        - name: Deploy to Heroku
+          uses: AkhileshNS/heroku-deploy@v3.12.12
+          with:
+             heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+             heroku_email: ${{secrets.HEROKU_EMAIL}}
+             heroku_app_name: ${{secrets.HEROKU_APP}}
