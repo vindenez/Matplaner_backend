@@ -46,7 +46,7 @@ jobs:
       - name: Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP: ${{ secrets.HEROKU_APP }}
+          HEROKU_APP: tasterj
         run: |
-          heroku git:remote -a $HEROKU_APP
+          heroku git:remote -a tasterj
           git push heroku main --force
