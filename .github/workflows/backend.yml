@@ -37,10 +37,7 @@ jobs:
       - name: Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP: ${{ secrets.HEROKU_APP }}
-          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
         run: |
-          echo $HEROKU_API_KEY | heroku auth:token
-          heroku auth:whoami
-          heroku git:remote -a $HEROKU_APP
+          heroku auth:token
+          heroku git:remote -a ${{ secrets.HEROKU_APP }}
           git push heroku main --force
