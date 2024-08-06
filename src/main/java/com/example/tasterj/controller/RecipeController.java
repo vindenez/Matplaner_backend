@@ -44,7 +44,7 @@ public class RecipeController {
         return new ResponseEntity<>(recipe, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<Recipe> createRecipe(@RequestHeader("userId") String userId, @Valid @RequestBody CreateRecipeDto createRecipeDto) {
         Recipe createdRecipe = recipeService.createRecipe(userId, createRecipeDto);
         return new ResponseEntity<>(createdRecipe, HttpStatus.CREATED);
