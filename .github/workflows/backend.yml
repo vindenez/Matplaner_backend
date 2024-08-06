@@ -34,19 +34,15 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Set up Heroku credentials
-        run: |
-          echo "machine api.heroku.com" > ~/.netrc
-          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
-          echo "machine git.heroku.com" >> ~/.netrc
-          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
-
-      - name: Deploy to Heroku
+      - name: Authenticate with Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP: tasterj
         run: |
-          heroku git:remote -a tasterj
-          git push heroku main --force
+          echo $HEROKU_API_KEY | heroku auth:token
+          heroku auth:whoami
+
+      - name: Add Heroku remote
+        run: git remote add heroku https://git.heroku.com/tasterj.git
+
+      - name: Deploy to Heroku
+        run: git push heroku main --force
