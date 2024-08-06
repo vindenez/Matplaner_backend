@@ -8,7 +8,6 @@ on:
     branches:
       - main
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,9 +31,13 @@ jobs:
       - name: Build with Maven
         run: mvn clean install -DskipTests
 
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
       - name: Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          git remote add heroku https://git.heroku.com/tasterj.git
+          heroku auth:token
+          heroku git:remote -a ${{ secrets.HEROKU_APP }}
           git push heroku main --force
