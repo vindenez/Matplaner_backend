@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class Ingredient {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", updatable = false, nullable = false)
     private String id;
 
     @ManyToOne
@@ -36,4 +37,8 @@ public class Ingredient {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IngredientUnit unit;
+
+    public Ingredient() {
+        this.id = UUID.randomUUID().toString();
+    }
 }

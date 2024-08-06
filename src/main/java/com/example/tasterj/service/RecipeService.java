@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
@@ -39,6 +40,7 @@ public class RecipeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
     }
 
+    @Transactional
     public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto) {
         Recipe recipe = new Recipe();
         recipe.setId(UUID.randomUUID().toString());
@@ -61,6 +63,7 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+    @Transactional
     public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
@@ -93,6 +96,7 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+    @Transactional
     public void deleteRecipe(String id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));

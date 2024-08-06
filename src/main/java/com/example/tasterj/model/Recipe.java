@@ -14,7 +14,7 @@ import java.util.List;
 public class Recipe {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", updatable = false, nullable = false)
     private String id;
 
     @Column(name = "user_id", nullable = false)
@@ -28,6 +28,9 @@ public class Recipe {
 
     @Column(nullable = false, length = 2083)
     private String instructions;
+
+    @Column(name = "preparation_time")
+    private Integer preparationTime;
 
     @ElementCollection
     @CollectionTable(name = "recipe_tags", joinColumns = @JoinColumn(name = "recipe_id"))
