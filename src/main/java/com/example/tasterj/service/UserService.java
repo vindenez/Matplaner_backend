@@ -21,6 +21,10 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + id + " not found"));
     }
 
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
     public User getUserBySupabaseUserId(String supabaseUserId) {
         return userRepository.findBySupabaseUserId(supabaseUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with Supabase ID " + supabaseUserId + " not found"));

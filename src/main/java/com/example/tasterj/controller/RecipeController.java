@@ -5,6 +5,8 @@ import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.model.Recipe;
 import com.example.tasterj.model.User;
 import com.example.tasterj.service.RecipeService;
+import com.example.tasterj.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,8 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.tasterj.service.UserService;
-import jakarta.validation.Valid;
+
 import java.security.Principal;
 
 @RestController
@@ -35,11 +36,12 @@ public class RecipeController {
     }
 
     @GetMapping("/favorites")
-    public ResponseEntity<Page<Recipe>> getFavoriteRecipes(@RequestHeader("userId") String userId,
-                                                           @RequestParam(defaultValue = "0") int page,
-                                                           @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<Recipe>> getFavoriteRecipes(@RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "10") int size,
+                                                           Principal principal) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Recipe> recipes = recipeService.getFavoriteRecipes(userId, pageable);
+        String supabaseUserId = principal.getName();
+        Page<Recipe> recipes = recipeService.getFavoriteRecipes(supabaseUserId, pageable);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
@@ -50,9 +52,13 @@ public class RecipeController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Recipe> createRecipe(@RequestBody CreateRecipeDto createRecipeDto, Principal principal) {
-        String supabaseUserId = principal.getName(); // Assuming the user ID is stored in the Principal's name
-        User user = userService.getUserBySupabaseUserId(supabaseUserId);
+    public ResponseEntity<Recipe> createRecipe(@Valid @RequestBody CreateRecipeDto createRecipeDto) {
+        String userId = createRecipeDto.getUserId();
+        User user = userService.getUserBySupabaseUserId(userId);
+        if (user == null) {
+            // Return a 404 Not Found response if the user does not exist
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         Recipe recipe = recipeService.createRecipe(user.getSupabaseUserId(), createRecipeDto);
         return new ResponseEntity<>(recipe, HttpStatus.CREATED);
     }
