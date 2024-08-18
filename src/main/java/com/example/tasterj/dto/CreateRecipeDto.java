@@ -36,7 +36,6 @@ public class CreateRecipeDto {
     @NotNull
     private String userId;
 
-    // Getters and Setters
     public String getName() {
         return name;
     }
