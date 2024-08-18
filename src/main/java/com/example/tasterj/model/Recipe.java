@@ -29,9 +29,6 @@ public class Recipe {
     @Column(nullable = false, length = 2083)
     private String instructions;
 
-    @Column(name = "preparation_time")
-    private Integer preparationTime;
-
     @ElementCollection
     @CollectionTable(name = "recipe_tags", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "tag", nullable = false)

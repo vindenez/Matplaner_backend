@@ -14,8 +14,6 @@ import java.util.UUID;
 public class User {
 
     @Id
-    private UUID id = UUID.randomUUID();
-
     @Column(nullable = false, unique = true)
     private String supabaseUserId;
 
