@@ -41,8 +41,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.NONE_OF_YOUR_BUISNESSql</groupId>
-			<artifactId>NONE_OF_YOUR_BUISNESSql</artifactId>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
