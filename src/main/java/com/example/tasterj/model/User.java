@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,8 +14,7 @@ import lombok.*;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private String id;
+    private UUID id = UUID.randomUUID();
 
     @Column(nullable = false, unique = true)
     private String supabaseUserId;
