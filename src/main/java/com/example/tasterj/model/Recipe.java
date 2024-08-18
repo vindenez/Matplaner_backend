@@ -3,6 +3,8 @@ package com.example.tasterj.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,11 +46,11 @@ public class Recipe {
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    @org.hibernate.annotations.CreationTimestamp
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    @org.hibernate.annotations.UpdateTimestamp
     private LocalDateTime updatedAt;
 }
