@@ -3,38 +3,44 @@ package com.example.tasterj.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Configuration
 public class RedisConfig {
 
     @Bean
-    public LettuceConnectionFactory redisConnectionFactory() {
-        // Extract host, port, password from the REDIS_URL environment variable
-        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
+    public JedisConnectionFactory jedisConnectionFactory() throws URISyntaxException {
         String redisUrl = System.getenv("REDIS_URL");
 
-        // Assuming the format is redis://:password@hostname:port
-        String urlWithoutProtocol = redisUrl.substring(8); // remove 'redis://'
-        String[] urlParts = urlWithoutProtocol.split("@");
-        String[] authParts = urlParts[0].split(":");
-        String[] hostParts = urlParts[1].split(":");
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
 
-        redisConfig.setPassword(authParts[1]);
-        redisConfig.setHostName(hostParts[0]);
-        redisConfig.setPort(Integer.parseInt(hostParts[1]));
+        if (redisUrl != null) {
+            URI redisUri = new URI(redisUrl);
 
-        return new LettuceConnectionFactory(redisConfig);
+            redisStandaloneConfiguration.setHostName(redisUri.getHost());
+            redisStandaloneConfiguration.setPort(redisUri.getPort());
+
+            String userInfo = redisUri.getUserInfo();
+            if (userInfo != null && userInfo.contains(":")) {
+                redisStandaloneConfiguration.setPassword(userInfo.split(":", 2)[1]);
+            }
+        } else {
+            // Fallback for local development if needed
+            redisStandaloneConfiguration.setHostName("localhost");
+            redisStandaloneConfiguration.setPort(6379);
+        }
+
+        return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> redisTemplate() throws URISyntaxException {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory());
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
+        template.setConnectionFactory(jedisConnectionFactory());
         return template;
     }
 }
