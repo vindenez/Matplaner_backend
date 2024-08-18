@@ -35,7 +35,6 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + id + " not found"));
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
-        // Ensure we don't change the Supabase user ID
         return userRepository.save(user);
     }
 
