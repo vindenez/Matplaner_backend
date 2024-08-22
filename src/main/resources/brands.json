@@ -1,0 +1,58 @@
+{
+    "Brands": {
+        "Frukt & Grønt": [
+            "Gartner",
+            "Grønn&Frisk",
+            "Eldorado",
+            "Season",
+            "Bama",
+            "First price",
+
+            "Kolonihagen",
+
+            "FG"
+        ],
+        "Fisk" : [
+            "Fiskemannen",
+            "Lofoten",
+            "Lerøy",
+            "Sjømathuset sentralpakk",
+            "Findus",
+            "First price",
+            "Øfas"
+        ],
+
+        "Bakeri": [
+            "Bakehuset"
+        ],
+        
+        "Meieri & Egg": [
+            "Q-meieriene",
+            "TINE",
+            "Rørosmeieriet",
+            "Prior",
+            "First price"
+        ],
+        "Pålegg": [
+            "Gilde",
+            "GILDE",
+            "Prior",
+            "First price",
+            "Extra"
+        ],
+        
+        "Kjøtt": [
+            "Prior",
+            "Lerstang",
+            "GILDE",
+            "Gilde",
+            "X-TRA",
+            "First price",
+            "COOP",
+            "Spar",
+            "Jacobs utvalgte",
+            "Meny",
+            "Folkets"
+        ]
+    }
+}

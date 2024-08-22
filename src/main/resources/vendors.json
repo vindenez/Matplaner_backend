@@ -1,0 +1,51 @@
+{
+    "Vendors": {
+        "Frukt & Grønt": [
+            "Bama dagligvare  as",
+            "Nortura sa g",
+            "Q-MEIERIENE AS",
+            "RØROSMAT SA",
+            "Tine sa"
+        ],
+        "Fisk":  [
+            "LERØY SEAFOOD AS",
+            "Lerøy seafood",
+            "Fersk fisk løsvekt",
+            "Lofotprodukt as ",
+            "Findus norge dagligvare",
+            "Geia food.",
+            "DOMSTEIN SJØMAT AS",
+            "SPESIALGROSSISTEN AS"
+
+        ],
+        "Bakeri": [
+            "Bakehuset direkte",
+            "United bakeries norway"
+        ],
+        
+        "Meieri & Egg": [
+            "Q-Meieriene AS",
+            "TINE SA",
+            "Rørosmeieriet AS",
+            "Nortura SA (Prior)"
+        ],
+
+        "Pålegg": [
+            "Gilde"
+        ],
+
+        "Kjøtt" : [
+            "NORTURA SA (PRIOR)",
+            "Nortura sa p",
+            "Gårdsand as",
+            "NORTURA SA (GILDE)",
+            "DEN STOLTE HANE AS",
+            "OLE RINGDAL AS",
+            "FATLAND SALG AS",
+            "REMA 1000 NORGE AS (LEV.)",
+            "STENSAAS REINSDYRSLAKTERI AS",
+            "Kjøtt/pølser løsvekt"
+        ]
+    }
+}
+
