@@ -56,7 +56,6 @@ public class RecipeController {
         String userId = createRecipeDto.getUserId();
         User user = userService.getUserBySupabaseUserId(userId);
         if (user == null) {
-            // Return a 404 Not Found response if the user does not exist
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         Recipe recipe = recipeService.createRecipe(user.getSupabaseUserId(), createRecipeDto);
