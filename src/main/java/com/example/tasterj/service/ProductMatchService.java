@@ -1,61 +1,58 @@
 package com.example.tasterj.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ProductMatchService {
 
     @Autowired
-    private ProductDataService productDataService;
+    private ResourceLoader resourceLoader;
 
-    public List<Map<String, Object>> findMatches(List<Map<String, String>> ingredients) {
-        // Validate input
-        if (ingredients == null || ingredients.isEmpty()) {
-            System.out.println("No ingredients provided for matching.");
-            return new ArrayList<>();
+    private List<Map<String, Object>> matchedProducts;
+
+    @PostConstruct
+    public void init() {
+        Resource resource = resourceLoader.getResource("classpath:matched_products.json");
+        this.matchedProducts = loadJson(resource);
+    }
+
+    private List<Map<String, Object>> loadJson(Resource resource) {
+        try (InputStream inputStream = resource.getInputStream()) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(inputStream, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load matched products JSON file", e);
         }
+    }
 
-        List<Map<String, Object>> products = productDataService.getProducts();
-        Map<String, List<String>> brands = productDataService.getBrands();
-        Map<String, List<String>> vendors = productDataService.getVendors();
-
-        List<Map<String, Object>> matchedResults = new ArrayList<>();
+    // Updated method to find matches for a list of ingredients
+    public List<Map<String, Object>> findMatches(List<Map<String, String>> ingredients) {
+        List<Map<String, Object>> result = new ArrayList<>();
 
         for (Map<String, String> ingredient : ingredients) {
-            if (ingredient == null || ingredient.get("ingredient") == null || ingredient.get("category") == null) {
-                System.out.println("Invalid ingredient entry: " + ingredient);
-                continue; // Skip invalid ingredient entries
-            }
+            String ingredientName = ingredient.get("ingredient");
 
-            String ingredientName = ingredient.get("ingredient").toLowerCase();
-            String ingredientCategory = ingredient.get("category");
+            Optional<Map<String, Object>> match = matchedProducts.stream()
+                    .filter(m -> ingredientName.equalsIgnoreCase((String) m.get("ingredient")))
+                    .findFirst();
 
-            List<String> relevantBrands = brands.getOrDefault(ingredientCategory, new ArrayList<>());
-            List<String> relevantVendors = vendors.getOrDefault(ingredientCategory, new ArrayList<>());
-
-            for (Map<String, Object> product : products) {
-                if (product == null || product.get("name") == null || product.get("brand") == null || product.get("vendor") == null) {
-                    System.out.println("Invalid product entry: " + product);
-                    continue; // Skip invalid product entries
-                }
-
-                String productName = ((String) product.get("name")).toLowerCase();
-                String productBrand = (String) product.get("brand");
-                String productVendor = (String) product.get("vendor");
-
-                if (productName.contains(ingredientName)) {
-                    if (relevantBrands.contains(productBrand) || relevantVendors.contains(productVendor)) {
-                        matchedResults.add(product);
-                    }
-                }
-            }
+            match.ifPresent(m -> result.addAll((List<Map<String, Object>>) m.getOrDefault("matches", Collections.emptyList())));
         }
 
-        System.out.println("Matched results: " + matchedResults.size());
-        return matchedResults;
+        return result;
     }
 }
