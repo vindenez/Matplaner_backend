@@ -16,8 +16,9 @@ public class ProductController {
     private ProductMatchService productMatchService;
 
     @PostMapping("/match")
-    public List<Map<String, Object>> getMatchedProducts(@RequestBody List<Map<String, String>> ingredients) {
+    public Map<String, List<Map<String, Object>>> getMatchedProducts(@RequestBody List<Map<String, String>> ingredients) {
         return productMatchService.findMatches(ingredients);
     }
+
 }
 

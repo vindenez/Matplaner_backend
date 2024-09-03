@@ -10,11 +10,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ProductMatchService {
@@ -39,9 +35,8 @@ public class ProductMatchService {
         }
     }
 
-    // Updated method to find matches for a list of ingredients
-    public List<Map<String, Object>> findMatches(List<Map<String, String>> ingredients) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    public Map<String, List<Map<String, Object>>> findMatches(List<Map<String, String>> ingredients) {
+        Map<String, List<Map<String, Object>>> result = new HashMap<>();
 
         for (Map<String, String> ingredient : ingredients) {
             String ingredientName = ingredient.get("ingredient");
@@ -50,9 +45,14 @@ public class ProductMatchService {
                     .filter(m -> ingredientName.equalsIgnoreCase((String) m.get("ingredient")))
                     .findFirst();
 
-            match.ifPresent(m -> result.addAll((List<Map<String, Object>>) m.getOrDefault("matches", Collections.emptyList())));
+            List<Map<String, Object>> matches = match
+                    .map(m -> (List<Map<String, Object>>) m.getOrDefault("matches", Collections.emptyList()))
+                    .orElse(Collections.emptyList());
+
+            result.put(ingredientName, matches);
         }
 
         return result;
     }
+
 }
