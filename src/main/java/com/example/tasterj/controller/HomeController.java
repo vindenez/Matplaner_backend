@@ -10,7 +10,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Welcome to TasterJ!";
+        return "Velkommen til Matplaner.no";
     }
 }
 
