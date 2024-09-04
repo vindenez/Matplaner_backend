@@ -6,7 +6,6 @@ import com.example.tasterj.model.Recipe;
 import com.example.tasterj.model.User;
 import com.example.tasterj.service.RecipeService;
 import com.example.tasterj.service.ImageService;
-
 import com.example.tasterj.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -42,16 +38,16 @@ public class RecipeController {
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable String id) {
         Recipe recipe = recipeService.getRecipeById(id);
         return new ResponseEntity<>(recipe, HttpStatus.OK);
     }
 
+    // Update for multipart handling with JSON and file (image)
     @PostMapping("/create")
-    public ResponseEntity<Recipe> createRecipe(@Valid @RequestBody CreateRecipeDto createRecipeDto,
-                                               @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+    public ResponseEntity<Recipe> createRecipe(@RequestPart("createRecipeDto") @Valid CreateRecipeDto createRecipeDto,
+                                               @RequestPart(value = "image", required = false) MultipartFile imageFile) {
         String userId = createRecipeDto.getUserId();
         User user = userService.getUserBySupabaseUserId(userId);
 
@@ -64,17 +60,15 @@ public class RecipeController {
         return new ResponseEntity<>(recipe, HttpStatus.CREATED);
     }
 
-
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> updateRecipe(
             @PathVariable String id,
-            @Valid @RequestBody UpdateRecipeDto updateRecipeDto,
-            @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart("updateRecipeDto") @Valid UpdateRecipeDto updateRecipeDto,
+            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
 
         Recipe updatedRecipe = recipeService.updateRecipe(id, updateRecipeDto, imageFile);
         return new ResponseEntity<>(updatedRecipe, HttpStatus.OK);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRecipe(@PathVariable String id) {
@@ -114,5 +108,4 @@ public class RecipeController {
 
         return new ResponseEntity<>("Image deleted successfully", HttpStatus.OK);
     }
-
 }
