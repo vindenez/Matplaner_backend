@@ -10,8 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface VoteRepository extends JpaRepository<Vote, Long> {
-    Optional<Vote> findByUser_IdAndRecipe_Id(Long userId, Long recipeId);
-
+    Optional<Vote> findByUser_SupabaseUserIdAndRecipe_Id(String supabaseUserId, Long recipeId);
     int countByRecipeAndVoteType(Recipe recipe, VoteType voteType);
 }
 

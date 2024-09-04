@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+
 @Service
 public class VoteService {
 
@@ -25,7 +26,6 @@ public class VoteService {
 
     @Transactional
     public void vote(String userId, String recipeId, Boolean upvote) {
-        Long userIdLong = Long.parseLong(userId);
         Long recipeIdLong = Long.parseLong(recipeId);
 
         Recipe recipe = recipeService.getRecipeById(recipeId);
@@ -38,7 +38,7 @@ public class VoteService {
             throw new RuntimeException("User not found with ID: " + userId);
         }
 
-        Optional<Vote> existingVoteOptional = voteRepository.findByUser_IdAndRecipe_Id(userIdLong, recipeIdLong);
+        Optional<Vote> existingVoteOptional = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeIdLong);
         VoteType voteType = (upvote == null) ? VoteType.NONE : (upvote ? VoteType.UPVOTE : VoteType.DOWNVOTE);
 
         if (existingVoteOptional.isPresent()) {
@@ -68,8 +68,8 @@ public class VoteService {
         VoteType userVoteType = VoteType.NONE;
 
         if (userId != null) {
-            Long userIdLong = Long.parseLong(userId);
-            Vote userVote = voteRepository.findByUser_IdAndRecipe_Id(userIdLong, recipeIdLong).orElse(null);            userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
+            Vote userVote = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeIdLong).orElse(null);
+            userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
         }
 
         return new RecipeWithVotesDto(recipe, upvotes, downvotes, userVoteType);
