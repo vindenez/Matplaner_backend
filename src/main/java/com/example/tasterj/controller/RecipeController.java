@@ -73,35 +73,34 @@ public class RecipeController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping("/{id}/upload-image")
-    public ResponseEntity<String> uploadRecipeImage(
-            @PathVariable String id,
-            @RequestParam("file") MultipartFile file) {
-
-        Recipe recipe = recipeService.getRecipeById(id);
-        if (recipe == null) {
-            return new ResponseEntity<>("Recipe not found", HttpStatus.NOT_FOUND);
+    @PostMapping("/upload-image")
+    public ResponseEntity<String> uploadRecipeImage(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return new ResponseEntity<>("No file uploaded", HttpStatus.BAD_REQUEST);
         }
 
         String imageUrl = imageService.uploadImage(file);
-        recipe.setImageUrl(imageUrl);
-        recipeService.saveRecipe(recipe);
+
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return new ResponseEntity<>("Image upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         return new ResponseEntity<>(imageUrl, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}/delete-image")
-    public ResponseEntity<String> deleteRecipeImage(@PathVariable String id) {
-        Recipe recipe = recipeService.getRecipeById(id);
-        if (recipe == null || recipe.getImageUrl() == null) {
-            return new ResponseEntity<>("Recipe or image not found", HttpStatus.NOT_FOUND);
+
+    @PostMapping("/delete-image")
+    public ResponseEntity<String> deleteRecipeImage(@RequestParam("imageUrl") String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return new ResponseEntity<>("No image URL provided", HttpStatus.BAD_REQUEST);
         }
 
-        imageService.deleteImage(recipe.getImageUrl());
-
-        recipe.setImageUrl(null);
-        recipeService.saveRecipe(recipe);
-
-        return new ResponseEntity<>("Image deleted successfully", HttpStatus.OK);
+        try {
+            imageService.deleteImage(imageUrl);
+            return new ResponseEntity<>("Image deleted successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete image: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 }
