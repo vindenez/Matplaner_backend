@@ -16,7 +16,8 @@ public class WebConfig {
                         .allowedOrigins(
                                 "http://localhost:3000",
                                 "https://tasterj.space/",
-                                "https://matplaner.no",
+                                "https://matplaner.no/",
+                                "https://www.matplaner.no/",
                                 "https://www.matplaner.no")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
