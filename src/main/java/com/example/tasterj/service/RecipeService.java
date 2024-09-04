@@ -40,7 +40,7 @@ public class RecipeService {
     }
 
     @Transactional
-    public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto, MultipartFile imageFile) {
+    public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto) {
         Recipe recipe = new Recipe();
         recipe.setId(UUID.randomUUID().toString());
         recipe.setUserId(userId);
@@ -61,16 +61,15 @@ public class RecipeService {
             return ingredient;
         }).collect(Collectors.toList()));
 
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String imageUrl = imageService.uploadImage(imageFile);
-            recipe.setImageUrl(imageUrl);
+        if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
+            recipe.setImageUrl(createRecipeDto.getImageUrl());
         }
 
         return recipeRepository.save(recipe);
     }
 
     @Transactional
-    public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto, MultipartFile imageFile) {
+    public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
 
@@ -103,9 +102,8 @@ public class RecipeService {
         }
 
 
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String imageUrl = imageService.uploadImage(imageFile);
-            recipe.setImageUrl(imageUrl);
+        if (updateRecipeDto.getImageUrl() != null && !updateRecipeDto.getImageUrl().isEmpty()) {
+            recipe.setImageUrl(updateRecipeDto.getImageUrl());
         }
 
         return recipeRepository.save(recipe);

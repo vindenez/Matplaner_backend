@@ -44,10 +44,8 @@ public class RecipeController {
         return new ResponseEntity<>(recipe, HttpStatus.OK);
     }
 
-    // Update for multipart handling with JSON and file (image)
     @PostMapping("/create")
-    public ResponseEntity<Recipe> createRecipe(@RequestPart("createRecipeDto") @Valid CreateRecipeDto createRecipeDto,
-                                               @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+    public ResponseEntity<Recipe> createRecipe(@RequestPart("createRecipeDto") @Valid CreateRecipeDto createRecipeDto) {
         String userId = createRecipeDto.getUserId();
         User user = userService.getUserBySupabaseUserId(userId);
 
@@ -55,7 +53,7 @@ public class RecipeController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        Recipe recipe = recipeService.createRecipe(user.getSupabaseUserId(), createRecipeDto, imageFile);
+        Recipe recipe = recipeService.createRecipe(user.getSupabaseUserId(), createRecipeDto);
 
         return new ResponseEntity<>(recipe, HttpStatus.CREATED);
     }
@@ -63,10 +61,9 @@ public class RecipeController {
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> updateRecipe(
             @PathVariable String id,
-            @RequestPart("updateRecipeDto") @Valid UpdateRecipeDto updateRecipeDto,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart("updateRecipeDto") @Valid UpdateRecipeDto updateRecipeDto) {
 
-        Recipe updatedRecipe = recipeService.updateRecipe(id, updateRecipeDto, imageFile);
+        Recipe updatedRecipe = recipeService.updateRecipe(id, updateRecipeDto);
         return new ResponseEntity<>(updatedRecipe, HttpStatus.OK);
     }
 
@@ -87,7 +84,6 @@ public class RecipeController {
         }
 
         String imageUrl = imageService.uploadImage(file);
-
         recipe.setImageUrl(imageUrl);
         recipeService.saveRecipe(recipe);
 

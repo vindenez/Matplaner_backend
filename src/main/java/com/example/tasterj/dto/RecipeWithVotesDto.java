@@ -8,7 +8,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RecipeWithVotesDto {
-    // Getters and Setters
     private Recipe recipe;
     private int upvotes;
     private int downvotes;

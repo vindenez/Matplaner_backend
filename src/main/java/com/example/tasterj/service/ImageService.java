@@ -8,9 +8,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.UUID;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 @Service
 public class ImageService {
 
@@ -32,8 +29,9 @@ public class ImageService {
     public String uploadImage(MultipartFile imageFile) {
         try {
             String filename = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+
             String uploadUrl = UriComponentsBuilder.fromHttpUrl(supabaseUrl)
-                    .pathSegment("storage", "v1", "object", bucketName, filename)
+                    .pathSegment("storage", "v1", "s3", bucketName, filename)
                     .toUriString();
 
             HttpHeaders headers = new HttpHeaders();
@@ -45,20 +43,21 @@ public class ImageService {
             ResponseEntity<String> response = restTemplate.exchange(uploadUrl, HttpMethod.POST, requestEntity, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                return supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + filename;
+                return supabaseUrl + "/storage/v1/s3/" + bucketName + "/" + filename;
             } else {
-                throw new RuntimeException("Failed to upload image: " + response.getBody());
+                throw new RuntimeException("Failed to upload image: " + response.getStatusCode() + " - " + response.getBody());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload image", e);
+            throw new RuntimeException("Failed to upload image: " + e.getMessage(), e);
         }
     }
+
     public void deleteImage(String imageUrl) {
         try {
             String filename = extractFilenameFromUrl(imageUrl);
 
             String deleteUrl = UriComponentsBuilder.fromHttpUrl(supabaseUrl)
-                    .pathSegment("storage", "v1", "object", bucketName, filename)
+                    .pathSegment("storage", "v1", "s3", bucketName, filename)
                     .toUriString();
 
             HttpHeaders headers = new HttpHeaders();
@@ -69,15 +68,18 @@ public class ImageService {
             ResponseEntity<String> response = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, requestEntity, String.class);
 
             if (response.getStatusCode() != HttpStatus.OK) {
-                throw new RuntimeException("Failed to delete image: " + response.getBody());
+                throw new RuntimeException("Failed to delete image: " + response.getStatusCode() + " - " + response.getBody());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to delete image", e);
+            throw new RuntimeException("Failed to delete image: " + e.getMessage(), e);
         }
     }
 
     private String extractFilenameFromUrl(String imageUrl) {
-        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+        if (imageUrl != null && imageUrl.contains("/")) {
+            return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+        } else {
+            throw new IllegalArgumentException("Invalid image URL: " + imageUrl);
+        }
     }
-
 }
