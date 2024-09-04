@@ -38,7 +38,7 @@ public class VoteService {
             throw new RuntimeException("User not found with ID: " + userId);
         }
 
-        Optional<Vote> existingVoteOptional = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeIdLong);
+        Optional<Vote> existingVoteOptional = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeId);
         VoteType voteType = (upvote == null) ? VoteType.NONE : (upvote ? VoteType.UPVOTE : VoteType.DOWNVOTE);
 
         if (existingVoteOptional.isPresent()) {
@@ -68,7 +68,7 @@ public class VoteService {
         VoteType userVoteType = VoteType.NONE;
 
         if (userId != null) {
-            Vote userVote = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeIdLong).orElse(null);
+            Vote userVote = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeId).orElse(null);
             userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
         }
 
