@@ -2,6 +2,7 @@ package com.example.tasterj.service;
 
 import com.example.tasterj.dto.RecipeWithVotesDto;
 import com.example.tasterj.model.Recipe;
+import com.example.tasterj.model.User;
 import com.example.tasterj.model.Vote;
 import com.example.tasterj.model.VoteType;
 import com.example.tasterj.repository.VoteRepository;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-
 @Service
 public class VoteService {
 
@@ -25,12 +25,20 @@ public class VoteService {
 
     @Transactional
     public void vote(String userId, String recipeId, Boolean upvote) {
+        Long userIdLong = Long.parseLong(userId);
+        Long recipeIdLong = Long.parseLong(recipeId);
+
         Recipe recipe = recipeService.getRecipeById(recipeId);
         if (recipe == null) {
-            throw new RuntimeException("Recipe not found");
+            throw new RuntimeException("Recipe not found with ID: " + recipeId);
         }
 
-        Optional<Vote> existingVoteOptional = voteRepository.findByUserIdAndRecipeId(userId, recipeId);
+        User user = userService.getUserBySupabaseUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        Optional<Vote> existingVoteOptional = voteRepository.findByUserIdAndRecipeId(userIdLong, recipeIdLong);
 
         VoteType voteType = (upvote == null) ? VoteType.NONE : (upvote ? VoteType.UPVOTE : VoteType.DOWNVOTE);
 
@@ -40,7 +48,7 @@ public class VoteService {
             voteRepository.save(existingVote);
         } else {
             Vote newVote = new Vote();
-            newVote.setUser(userService.getUserBySupabaseUserId(userId));
+            newVote.setUser(user);
             newVote.setRecipe(recipe);
             newVote.setVoteType(voteType);
             voteRepository.save(newVote);
@@ -48,8 +56,9 @@ public class VoteService {
     }
 
     public RecipeWithVotesDto getRecipeWithVotes(String recipeId, String userId) {
-        Recipe recipe = recipeService.getRecipeById(recipeId);
+        Long recipeIdLong = Long.parseLong(recipeId);
 
+        Recipe recipe = recipeService.getRecipeById(recipeId);
         if (recipe == null) {
             throw new RuntimeException("Recipe not found");
         }
@@ -58,12 +67,13 @@ public class VoteService {
         int downvotes = voteRepository.countByRecipeAndVoteType(recipe, VoteType.DOWNVOTE);
 
         VoteType userVoteType = VoteType.NONE;
+
         if (userId != null) {
-            Vote userVote = voteRepository.findByUserIdAndRecipeId(userId, recipeId).orElse(null);
+            Long userIdLong = Long.parseLong(userId);
+            Vote userVote = voteRepository.findByUserIdAndRecipeId(userIdLong, recipeIdLong).orElse(null);
             userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
         }
 
         return new RecipeWithVotesDto(recipe, upvotes, downvotes, userVoteType);
     }
-
 }
