@@ -39,6 +39,10 @@ public class Recipe {
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Ingredient> ingredients;
 
+    @ElementCollection
+    @CollectionTable(name = "recipe_ean_codes", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "ean_code", nullable = true)
+    private List<String> eanCodes;
 
     @ManyToOne
     @JoinColumn(name = "user_id", insertable = false, updatable = false)

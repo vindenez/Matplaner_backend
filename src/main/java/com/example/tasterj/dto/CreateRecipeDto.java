@@ -32,6 +32,7 @@ public class CreateRecipeDto {
     @Size(min = 1)
     private List<@Valid CreateIngredientDto> ingredients;
 
+
     @JsonProperty("userId")
     @NotNull
     private String userId;
@@ -83,4 +84,5 @@ public class CreateRecipeDto {
     public void setUserId(String userId) {
         this.userId = userId;
     }
+
 }

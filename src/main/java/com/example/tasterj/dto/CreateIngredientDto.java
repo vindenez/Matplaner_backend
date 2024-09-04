@@ -30,6 +30,7 @@ public class CreateIngredientDto {
     @NotNull
     private IngredientUnit unit;
 
+
     // Getters and Setters
     public String getEan() {
         return ean;
