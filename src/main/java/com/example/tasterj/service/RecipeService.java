@@ -1,6 +1,5 @@
 package com.example.tasterj.service;
 
-
 import com.example.tasterj.dto.CreateRecipeDto;
 import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.model.Recipe;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
@@ -27,6 +27,9 @@ public class RecipeService {
     @Autowired
     private IngredientRepository ingredientRepository;
 
+    @Autowired
+    private ImageService imageService;
+
     public Page<Recipe> getRecipes(Pageable pageable) {
         return recipeRepository.findAll(pageable);
     }
@@ -41,7 +44,7 @@ public class RecipeService {
     }
 
     @Transactional
-    public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto) {
+    public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto, MultipartFile imageFile) {
         Recipe recipe = new Recipe();
         recipe.setId(UUID.randomUUID().toString());
         recipe.setUserId(userId);
@@ -49,6 +52,7 @@ public class RecipeService {
         recipe.setDescription(createRecipeDto.getDescription());
         recipe.setInstructions(createRecipeDto.getInstructions());
         recipe.setTags(createRecipeDto.getTags());
+
         recipe.setIngredients(createRecipeDto.getIngredients().stream().map(dto -> {
             Ingredient ingredient = new Ingredient();
             ingredient.setId(UUID.randomUUID().toString());
@@ -60,13 +64,20 @@ public class RecipeService {
             ingredient.setImage(dto.getImage());
             return ingredient;
         }).collect(Collectors.toList()));
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = imageService.uploadImage(imageFile);
+            recipe.setImageUrl(imageUrl);
+        }
+
         return recipeRepository.save(recipe);
     }
 
     @Transactional
-    public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
+    public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto, MultipartFile imageFile) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
         if (updateRecipeDto.getName() != null) {
             recipe.setName(updateRecipeDto.getName());
         }
@@ -79,6 +90,7 @@ public class RecipeService {
         if (updateRecipeDto.getTags() != null) {
             recipe.setTags(updateRecipeDto.getTags());
         }
+
         if (updateRecipeDto.getIngredients() != null) {
             ingredientRepository.deleteByRecipeId(recipe.getId());
             recipe.setIngredients(updateRecipeDto.getIngredients().stream().map(dto -> {
@@ -93,6 +105,12 @@ public class RecipeService {
                 return ingredient;
             }).collect(Collectors.toList()));
         }
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = imageService.uploadImage(imageFile);
+            recipe.setImageUrl(imageUrl);
+        }
+
         return recipeRepository.save(recipe);
     }
 
@@ -102,4 +120,10 @@ public class RecipeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
         recipeRepository.delete(recipe);
     }
+
+    @Transactional
+    public Recipe saveRecipe(Recipe recipe) {
+        return recipeRepository.save(recipe);
+    }
+
 }

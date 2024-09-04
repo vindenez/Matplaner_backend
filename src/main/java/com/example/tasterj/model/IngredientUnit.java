@@ -5,10 +5,10 @@ public enum IngredientUnit {
     KILOGRAM,
     MILLILITER,
     LITER,
-    PIECE,
-    TABLESPOON,
-    TEASPOON,
-    PINCH,
-    SLICE,
-    CUP,
+    STYKK,
+    MATSKEI,
+    TESKEI,
+    SPISESKEI,
+    KLYPE,
+
 }
