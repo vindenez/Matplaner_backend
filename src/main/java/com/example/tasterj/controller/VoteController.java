@@ -6,6 +6,8 @@ import com.example.tasterj.service.UserService;
 import com.example.tasterj.service.VoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,10 +25,12 @@ public class VoteController {
     @PostMapping("/{recipeId}")
     public ResponseEntity<?> voteRecipe(
             @PathVariable String recipeId,
-            @RequestBody String userId,  // Extract userId from the request body or DTO
             @RequestParam(required = false) Boolean upvote) {
 
-        User user = userService.getUserBySupabaseUserId(userId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String supabaseUserId = authentication.getName();
+
+        User user = userService.getUserBySupabaseUserId(supabaseUserId);
 
         if (user == null) {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
@@ -41,21 +45,13 @@ public class VoteController {
     }
 
     @GetMapping("/{recipeId}")
-    public ResponseEntity<?> getRecipeWithVotes(
-            @PathVariable String recipeId,
-            @RequestBody String userId) {  // Extract userId from the request body or DTO
-
-        User user = userService.getUserBySupabaseUserId(userId);
-
-        if (user == null) {
-            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-        }
-
+    public ResponseEntity<?> getRecipeWithVotes(@PathVariable String recipeId) {
         try {
-            RecipeWithVotesDto recipeWithVotes = voteService.getRecipeWithVotes(recipeId, user.getSupabaseUserId());
+            RecipeWithVotesDto recipeWithVotes = voteService.getRecipeWithVotes(recipeId);
             return new ResponseEntity<>(recipeWithVotes, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("An error occurred while fetching recipe votes: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

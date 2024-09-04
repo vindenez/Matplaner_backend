@@ -38,7 +38,7 @@ public class VoteService {
             throw new RuntimeException("User not found with ID: " + userId);
         }
 
-        Optional<Vote> existingVoteOptional = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeId);
+        Optional<Vote> existingVoteOptional = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(recipeId);
         VoteType voteType = (upvote == null) ? VoteType.NONE : (upvote ? VoteType.UPVOTE : VoteType.DOWNVOTE);
 
         if (existingVoteOptional.isPresent()) {
@@ -54,7 +54,7 @@ public class VoteService {
         }
     }
 
-    public RecipeWithVotesDto getRecipeWithVotes(String recipeId, String userId) {
+    public RecipeWithVotesDto getRecipeWithVotes(String recipeId) {
         Long recipeIdLong = Long.parseLong(recipeId);
 
         Recipe recipe = recipeService.getRecipeById(recipeId);
@@ -67,10 +67,9 @@ public class VoteService {
 
         VoteType userVoteType = VoteType.NONE;
 
-        if (userId != null) {
-            Vote userVote = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(userId, recipeId).orElse(null);
-            userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
-        }
+        Vote userVote = voteRepository.findByUser_SupabaseUserIdAndRecipe_Id(recipeId).orElse(null);
+        userVoteType = (userVote != null) ? userVote.getVoteType() : VoteType.NONE;
+
 
         return new RecipeWithVotesDto(recipe, upvotes, downvotes, userVoteType);
     }
