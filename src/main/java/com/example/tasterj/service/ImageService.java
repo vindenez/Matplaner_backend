@@ -29,7 +29,7 @@ public class ImageService {
         this.restTemplate = restTemplate;
     }
 
-    public String uploadImage(MultipartFile imageFile) {
+    public String uploadImage(MultipartFile imageFile, String jwtToken) {
         try {
             String filename = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
 
@@ -39,7 +39,7 @@ public class ImageService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.set("Authorization", "Bearer " + jwtToken);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", new ByteArrayResource(imageFile.getBytes()) {
@@ -62,6 +62,7 @@ public class ImageService {
             throw new RuntimeException("Failed to upload image: " + e.getMessage(), e);
         }
     }
+
 
     public void deleteImage(String imageUrl) {
         try {

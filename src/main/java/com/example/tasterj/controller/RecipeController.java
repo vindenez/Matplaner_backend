@@ -14,6 +14,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,11 +78,19 @@ public class RecipeController {
 
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadRecipeImage(@RequestParam("file") MultipartFile file) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
+        }
+
+        String jwtToken = ((JwtAuthenticationToken) authentication).getToken().getTokenValue();
+
         if (file == null || file.isEmpty()) {
             return new ResponseEntity<>("No file uploaded", HttpStatus.BAD_REQUEST);
         }
 
-        String imageUrl = imageService.uploadImage(file);
+        String imageUrl = imageService.uploadImage(file, jwtToken);
 
         if (imageUrl == null || imageUrl.isEmpty()) {
             return new ResponseEntity<>("Image upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
