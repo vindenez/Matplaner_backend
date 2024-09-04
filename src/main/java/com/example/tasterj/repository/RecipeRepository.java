@@ -10,6 +10,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, String> {
 
-    @Query("SELECT r FROM Recipe r JOIN r.favorites f WHERE f.user.id = :userId")
-    Page<Recipe> findFavoriteRecipesByUserId(String userId, Pageable pageable);
 }

@@ -34,10 +34,6 @@ public class RecipeService {
         return recipeRepository.findAll(pageable);
     }
 
-    public Page<Recipe> getFavoriteRecipes(String userId, Pageable pageable) {
-        return recipeRepository.findFavoriteRecipesByUserId(userId, pageable);
-    }
-
     public Recipe getRecipeById(String id) {
         return recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));

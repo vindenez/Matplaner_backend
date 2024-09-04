@@ -42,15 +42,6 @@ public class RecipeController {
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
-    @GetMapping("/favorites")
-    public ResponseEntity<Page<Recipe>> getFavoriteRecipes(@RequestParam(defaultValue = "0") int page,
-                                                           @RequestParam(defaultValue = "10") int size,
-                                                           Principal principal) {
-        Pageable pageable = PageRequest.of(page, size);
-        String supabaseUserId = principal.getName();
-        Page<Recipe> recipes = recipeService.getFavoriteRecipes(supabaseUserId, pageable);
-        return new ResponseEntity<>(recipes, HttpStatus.OK);
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable String id) {
