@@ -13,10 +13,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Apply CORS settings to all paths
-                        .allowedOrigins("http://localhost:3000", "https://tasterj.space/") // Allow these origins
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow these HTTP methods
-                        .allowedHeaders("*") // Allow all headers
-                        .allowCredentials(true); // Allow credentials (cookies, authorization headers, etc.)
+                        .allowedOrigins("http://localhost:3000", "https://tasterj.space/", "https://www.matplaner.no/")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }
