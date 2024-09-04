@@ -1,3 +1,3 @@
-# Tasterj
+# Matplaner
 
-A place where users can create and share recipes.
+For de som er glad i mat, men også er prisbevisst.
