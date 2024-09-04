@@ -44,7 +44,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("https://tasterj.space", "http://localhost:3000", "https://matplaner.no"));
+        config.setAllowedOrigins(Arrays.asList(
+                "https://tasterj.space",
+                "http://localhost:3000",
+                "https://matplaner.no",
+                "https://www.matplaner.no"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);

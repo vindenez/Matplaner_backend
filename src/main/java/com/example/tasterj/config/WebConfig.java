@@ -12,8 +12,12 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // Apply CORS settings to all paths
-                        .allowedOrigins("http://localhost:3000", "https://tasterj.space/", "https://matplaner.no/")
+                registry.addMapping("/**")
+                        .allowedOrigins(
+                                "http://localhost:3000",
+                                "https://tasterj.space/",
+                                "https://matplaner.no",
+                                "https://www.matplaner.no")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
