@@ -74,7 +74,6 @@ public class ProductSearchService {
         return substrings.stream().allMatch(substring -> name.contains(substring));
     }
 
-
     private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
         String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
@@ -102,18 +101,10 @@ public class ProductSearchService {
                 .filter(substring -> !nonNameSubstrings.contains(substring))
                 .collect(Collectors.toSet());
 
-        // Step 3: Check if the product name matches the remaining substrings
-        boolean nameMatches = remainingSubstrings.isEmpty() || remainingSubstrings.stream().allMatch(name::contains);
+        // Step 3: Check if the product name matches at least one of the remaining substrings (allow partial match)
+        boolean nameMatches = remainingSubstrings.isEmpty() || remainingSubstrings.stream().anyMatch(name::contains);
 
         // Step 4: Return true if both conditions are satisfied
         return !nonNameSubstrings.isEmpty() && nameMatches;
     }
-
-
-
-
-
-
-
-
 }
