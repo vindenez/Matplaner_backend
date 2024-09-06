@@ -52,24 +52,43 @@ public class ProductSearchService {
     public List<Map<String, Object>> searchProducts(String query) {
         List<String> substrings = generateSubstrings(query);
 
-        // Products that match name and brand/vendor/store/category
-        List<Map<String, Object>> combinedMatches = products.stream()
-                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings), true))
-                .collect(Collectors.toList());
+        // Identify which substrings match brand, vendor, store, or category
+        Set<String> brandsVendorsStoresCategories = substrings.stream()
+                .filter(substring -> products.stream()
+                        .anyMatch(product ->
+                                productMatchesBrandVendorCategoryOrStore(product, substring)))
+                .collect(Collectors.toSet());
 
-        // If combined matches exist, return those
-        if (!combinedMatches.isEmpty()) {
-            return combinedMatches;
+        // If no brand/vendor/store/category is found, search by product name only
+        if (brandsVendorsStoresCategories.isEmpty()) {
+            return products.stream()
+                    .filter(product -> productMatchesName(product, substrings))
+                    .collect(Collectors.toList());
         }
 
-        // If no combined matches, return products matching any substring (name or brand/vendor/store/category)
-        return products.stream()
-                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings), false))
+        // If we have matching brands/vendors/stores/categories, filter products by name and brand/vendor/store/category
+        List<Map<String, Object>> filteredProducts = products.stream()
+                .filter(product ->
+                        productMatchesName(product, substrings) &&
+                                productMatchesAnyBrandVendorCategoryOrStore(product, brandsVendorsStoresCategories))
                 .collect(Collectors.toList());
+
+        // If no products match both name and brand/vendor/store/category, return products that match brand/vendor/store/category only
+        if (filteredProducts.isEmpty()) {
+            return products.stream()
+                    .filter(product -> productMatchesAnyBrandVendorCategoryOrStore(product, brandsVendorsStoresCategories))
+                    .collect(Collectors.toList());
+        }
+
+        return filteredProducts;
     }
 
-    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings, boolean strictMatch) {
+    private boolean productMatchesName(Map<String, Object> product, List<String> substrings) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
+        return substrings.stream().allMatch(substring -> name.contains(substring));
+    }
+
+    private boolean productMatchesAnyBrandVendorCategoryOrStore(Map<String, Object> product, Set<String> substrings) {
         String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
         String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
         List<Map<String, Object>> categories = (List<Map<String, Object>>) product.get("category");
@@ -84,25 +103,34 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
-        // Check if the product matches brand/vendor/store/category
-        boolean anyBrandVendorStoreCategoryMatch = querySubstrings.stream().anyMatch(substring ->
+        return substrings.stream().anyMatch(substring ->
                 brand.contains(substring) ||
                         vendor.contains(substring) ||
-                        store.contains(substring) ||
-                        categoryNames.stream().anyMatch(cat -> cat.contains(substring))
-        );
-
-        // Check if the product name matches
-        boolean nameMatches = querySubstrings.stream().anyMatch(substring -> name.contains(substring));
-
-        // If strictMatch is true, we only want products that match both name and brand/vendor/store/category
-        if (strictMatch) {
-            return anyBrandVendorStoreCategoryMatch && nameMatches;
-        }
-
-        // Otherwise, allow partial matches: either name or brand/vendor/store/category
-        return nameMatches || anyBrandVendorStoreCategoryMatch;
+                        categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
+                        store.contains(substring));
     }
+
+    private boolean productMatchesBrandVendorCategoryOrStore(Map<String, Object> product, String substring) {
+        String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
+        String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
+        List<Map<String, Object>> categories = (List<Map<String, Object>>) product.get("category");
+        String store = Objects.requireNonNullElse(
+                product.containsKey("store") ? (String) ((Map<String, Object>) product.get("store")).get("name") : null,
+                ""
+        ).toLowerCase();
+
+        List<String> categoryNames = categories != null
+                ? categories.stream()
+                .map(cat -> Objects.requireNonNullElse((String) cat.get("name"), "").toLowerCase())
+                .collect(Collectors.toList())
+                : Collections.emptyList();
+
+        return brand.contains(substring) ||
+                vendor.contains(substring) ||
+                categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
+                store.contains(substring);
+    }
+
 
 
 
