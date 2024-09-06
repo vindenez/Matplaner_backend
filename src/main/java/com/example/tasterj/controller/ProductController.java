@@ -37,8 +37,13 @@ public class ProductController {
 
         List<Map<String, Object>> results = productSearchService.searchProducts(query);
 
+        if (results.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No products found for the given query.");
+        }
+
         return ResponseEntity.ok(results);
     }
+
 
 }
 

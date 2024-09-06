@@ -48,29 +48,27 @@ public class ProductSearchService {
         return substrings;
     }
 
+
     public List<Map<String, Object>> searchProducts(String query) {
         List<String> substrings = generateSubstrings(query);
 
-        List<Map<String, Object>> matchedByName = products.stream()
-                .filter(product -> ((String) product.get("name")).toLowerCase().contains(substrings.get(0)))
+        // Products that match name and brand/vendor/store/category
+        List<Map<String, Object>> combinedMatches = products.stream()
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings), true))
                 .collect(Collectors.toList());
 
-        return matchedByName.stream()
-                .peek(product -> {
-                    String defaultImage = "https://media.istockphoto.com/id/1472933890/vector/no-image-vector-symbol-missing-available-icon-no-gallery-for-this-moment-placeholder.jpg?s=612x612&w=0&k=20&c=Rdn-lecwAj8ciQEccm0Ep2RX50FCuUJOaEM8qQjiLL0=";
+        // If combined matches exist, return those
+        if (!combinedMatches.isEmpty()) {
+            return combinedMatches;
+        }
 
-                    String productImage = (String) product.get("image");
-                    if (productImage == null || productImage.trim().isEmpty()) {
-                        product.put("image", defaultImage);
-                    } else {
-                        product.put("image", productImage);
-                    }
-                })
-                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings)))
+        // If no combined matches, return products matching any substring (name or brand/vendor/store/category)
+        return products.stream()
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings), false))
                 .collect(Collectors.toList());
     }
 
-    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings) {
+    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings, boolean strictMatch) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
         String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
         String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
@@ -86,7 +84,7 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
-        // 1. Check if any substring matches brand/vendor/store/category
+        // Check if the product matches brand/vendor/store/category
         boolean anyBrandVendorStoreCategoryMatch = querySubstrings.stream().anyMatch(substring ->
                 brand.contains(substring) ||
                         vendor.contains(substring) ||
@@ -94,22 +92,18 @@ public class ProductSearchService {
                         categoryNames.stream().anyMatch(cat -> cat.contains(substring))
         );
 
-        // 2. Check if product name matches any substring
+        // Check if the product name matches
         boolean nameMatches = querySubstrings.stream().anyMatch(substring -> name.contains(substring));
 
-        // 3. If there is a match with a brand/vendor/store/category, and also the product name matches, return this product
-        if (anyBrandVendorStoreCategoryMatch && nameMatches) {
-            return true;
+        // If strictMatch is true, we only want products that match both name and brand/vendor/store/category
+        if (strictMatch) {
+            return anyBrandVendorStoreCategoryMatch && nameMatches;
         }
 
-        // 4. If no products match both name and brand/vendor/store/category, return products that match only name when there's no brand/vendor/store/category match
-        if (!anyBrandVendorStoreCategoryMatch && nameMatches) {
-            return true;
-        }
-
-        // 5. If no product name match but brand/vendor/store/category match, return those products (fallback)
-        return anyBrandVendorStoreCategoryMatch;
+        // Otherwise, allow partial matches: either name or brand/vendor/store/category
+        return nameMatches || anyBrandVendorStoreCategoryMatch;
     }
+
 
 
 
