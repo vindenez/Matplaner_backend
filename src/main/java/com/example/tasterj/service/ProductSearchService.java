@@ -86,7 +86,7 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
-        return querySubstrings.stream().anyMatch(substring ->
+        return querySubstrings.stream().allMatch(substring ->
                 name.contains(substring) ||
                         brand.contains(substring) ||
                         vendor.contains(substring) ||
@@ -94,5 +94,6 @@ public class ProductSearchService {
                         store.contains(substring)
         );
     }
+
 
 }
