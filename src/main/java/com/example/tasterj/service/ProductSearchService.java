@@ -48,7 +48,6 @@ public class ProductSearchService {
         return substrings;
     }
 
-
     public List<Map<String, Object>> searchProducts(String query) {
         // Generate substrings from the search query
         Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
