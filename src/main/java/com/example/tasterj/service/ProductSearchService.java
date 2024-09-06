@@ -50,37 +50,23 @@ public class ProductSearchService {
 
 
     public List<Map<String, Object>> searchProducts(String query) {
-        List<String> substrings = generateSubstrings(query);
+        // Generate substrings from the search query
+        Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
 
-        // Identify which substrings match brand, vendor, store, or category
-        Set<String> brandsVendorsStoresCategories = substrings.stream()
-                .filter(substring -> products.stream()
-                        .anyMatch(product ->
-                                productMatchesBrandVendorCategoryOrStore(product, substring)))
-                .collect(Collectors.toSet());
-
-        // If no brand/vendor/store/category is found, search by product name only
-        if (brandsVendorsStoresCategories.isEmpty()) {
-            return products.stream()
-                    .filter(product -> productMatchesName(product, substrings))
-                    .collect(Collectors.toList());
-        }
-
-        // If we have matching brands/vendors/stores/categories, filter products by name and brand/vendor/store/category
+        // Step 1: Filter products that match both the product name and brand/vendor/store/category
         List<Map<String, Object>> filteredProducts = products.stream()
-                .filter(product ->
-                        productMatchesName(product, substrings) &&
-                                productMatchesAnyBrandVendorCategoryOrStore(product, brandsVendorsStoresCategories))
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, querySubstrings))
                 .collect(Collectors.toList());
 
-        // If no products match both name and brand/vendor/store/category, return products that match brand/vendor/store/category only
-        if (filteredProducts.isEmpty()) {
-            return products.stream()
-                    .filter(product -> productMatchesAnyBrandVendorCategoryOrStore(product, brandsVendorsStoresCategories))
-                    .collect(Collectors.toList());
+        // Step 2: If products match both conditions, return those products
+        if (!filteredProducts.isEmpty()) {
+            return filteredProducts;
         }
 
-        return filteredProducts;
+        // Step 3: If no products match both conditions, return products that match the query substrings in the name only
+        return products.stream()
+                .filter(product -> productMatchesName(product, new ArrayList<>(querySubstrings)))
+                .collect(Collectors.toList());
     }
 
     private boolean productMatchesName(Map<String, Object> product, List<String> substrings) {
@@ -88,7 +74,9 @@ public class ProductSearchService {
         return substrings.stream().allMatch(substring -> name.contains(substring));
     }
 
-    private boolean productMatchesAnyBrandVendorCategoryOrStore(Map<String, Object> product, Set<String> substrings) {
+
+    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings) {
+        String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
         String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
         String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
         List<Map<String, Object>> categories = (List<Map<String, Object>>) product.get("category");
@@ -103,33 +91,24 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
-        return substrings.stream().anyMatch(substring ->
-                brand.contains(substring) ||
-                        vendor.contains(substring) ||
-                        categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
-                        store.contains(substring));
+        // Step 1: Identify substrings that match brand/vendor/store/category
+        Set<String> nonNameSubstrings = querySubstrings.stream()
+                .filter(substring -> brand.contains(substring) || vendor.contains(substring) ||
+                        store.contains(substring) || categoryNames.stream().anyMatch(cat -> cat.contains(substring)))
+                .collect(Collectors.toSet());
+
+        // Step 2: Filter out these substrings from the query to match with product name
+        Set<String> remainingSubstrings = querySubstrings.stream()
+                .filter(substring -> !nonNameSubstrings.contains(substring))
+                .collect(Collectors.toSet());
+
+        // Step 3: Check if the product name matches the remaining substrings
+        boolean nameMatches = remainingSubstrings.isEmpty() || remainingSubstrings.stream().allMatch(name::contains);
+
+        // Step 4: Return true if both conditions are satisfied
+        return !nonNameSubstrings.isEmpty() && nameMatches;
     }
 
-    private boolean productMatchesBrandVendorCategoryOrStore(Map<String, Object> product, String substring) {
-        String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
-        String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
-        List<Map<String, Object>> categories = (List<Map<String, Object>>) product.get("category");
-        String store = Objects.requireNonNullElse(
-                product.containsKey("store") ? (String) ((Map<String, Object>) product.get("store")).get("name") : null,
-                ""
-        ).toLowerCase();
-
-        List<String> categoryNames = categories != null
-                ? categories.stream()
-                .map(cat -> Objects.requireNonNullElse((String) cat.get("name"), "").toLowerCase())
-                .collect(Collectors.toList())
-                : Collections.emptyList();
-
-        return brand.contains(substring) ||
-                vendor.contains(substring) ||
-                categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
-                store.contains(substring);
-    }
 
 
 
