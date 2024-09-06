@@ -86,14 +86,18 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
-        return querySubstrings.stream().allMatch(substring ->
-                name.contains(substring) ||
-                        brand.contains(substring) ||
-                        vendor.contains(substring) ||
-                        categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
-                        store.contains(substring)
+        boolean nameMatches = querySubstrings.stream().anyMatch(substring -> name.contains(substring));
+
+        boolean brandVendorStoreMatches = querySubstrings.stream().anyMatch(substring ->
+                brand.contains(substring) || vendor.contains(substring) || store.contains(substring)
         );
+        boolean categoryMatches = querySubstrings.stream().anyMatch(substring ->
+                categoryNames.stream().anyMatch(cat -> cat.contains(substring))
+        );
+
+        return nameMatches && (brandVendorStoreMatches || categoryMatches);
     }
+
 
 
 }
