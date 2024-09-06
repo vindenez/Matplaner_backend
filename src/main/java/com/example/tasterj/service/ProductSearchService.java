@@ -86,17 +86,32 @@ public class ProductSearchService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
+        // 1. Check if any substring matches brand/vendor/store/category
+        boolean anyBrandVendorStoreCategoryMatch = querySubstrings.stream().anyMatch(substring ->
+                brand.contains(substring) ||
+                        vendor.contains(substring) ||
+                        store.contains(substring) ||
+                        categoryNames.stream().anyMatch(cat -> cat.contains(substring))
+        );
+
+        // 2. Check if product name matches any substring
         boolean nameMatches = querySubstrings.stream().anyMatch(substring -> name.contains(substring));
 
-        boolean brandVendorStoreMatches = querySubstrings.stream().anyMatch(substring ->
-                brand.contains(substring) || vendor.contains(substring) || store.contains(substring)
-        );
-        boolean categoryMatches = querySubstrings.stream().anyMatch(substring ->
-                categoryNames.stream().anyMatch(cat -> cat.contains(substring))
-        );
+        // 3. If there is a match with a brand/vendor/store/category, and also the product name matches, return this product
+        if (anyBrandVendorStoreCategoryMatch && nameMatches) {
+            return true;
+        }
 
-        return nameMatches && (brandVendorStoreMatches || categoryMatches);
+        // 4. If no products match both name and brand/vendor/store/category, return products that match only name when there's no brand/vendor/store/category match
+        if (!anyBrandVendorStoreCategoryMatch && nameMatches) {
+            return true;
+        }
+
+        // 5. If no product name match but brand/vendor/store/category match, return those products (fallback)
+        return anyBrandVendorStoreCategoryMatch;
     }
+
+
 
 
 
