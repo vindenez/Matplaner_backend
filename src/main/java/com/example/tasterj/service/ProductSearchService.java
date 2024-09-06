@@ -55,12 +55,15 @@ public class ProductSearchService {
                 .filter(product -> ((String) product.get("name")).toLowerCase().contains(substrings.get(0)))
                 .collect(Collectors.toList());
 
-        Set<String> substringSet = new HashSet<>(substrings);
-
         return matchedByName.stream()
-                .filter(product -> filterByBrandVendorCategoryAndStore(product, substringSet))
+                .peek(product -> {
+                    String defaultImage = "https://media.istockphoto.com/id/1472933890/vector/no-image-vector-symbol-missing-available-icon-no-gallery-for-this-moment-placeholder.jpg?s=612x612&w=0&k=20&c=Rdn-lecwAj8ciQEccm0Ep2RX50FCuUJOaEM8qQjiLL0=";
+                    product.put("image", Objects.requireNonNullElse((String) product.get("image"), defaultImage));
+                })
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, new HashSet<>(substrings)))
                 .collect(Collectors.toList());
     }
+
 
     private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
