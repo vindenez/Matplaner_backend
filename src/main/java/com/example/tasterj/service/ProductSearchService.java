@@ -56,11 +56,11 @@ public class ProductSearchService {
                 .collect(Collectors.toList());
 
         return matchedByName.stream()
-                .filter(product -> filterByBrandVendorCategory(product, substrings))
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, substrings))
                 .collect(Collectors.toList());
     }
 
-    private boolean filterByBrandVendorCategory(Map<String, Object> product, List<String> substrings) {
+    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, List<String> substrings) {
         final String brand = ((String) product.get("brand")).toLowerCase();
         final String vendor = ((String) product.get("vendor")).toLowerCase();
 
@@ -75,8 +75,10 @@ public class ProductSearchService {
             categoryNames = "";
         }
 
-        return substrings.subList(1, substrings.size()).stream() // Skip the first substring as it's already matched by name
-                .anyMatch(substring -> brand.contains(substring) || vendor.contains(substring) || categoryNames.contains(substring));
-    }
+        Map<String, Object> store = (Map<String, Object>) product.get("store");
+        final String storeName = store != null ? ((String) store.get("name")).toLowerCase() : "";
 
+        return substrings.subList(1, substrings.size()).stream()
+                .anyMatch(substring -> brand.contains(substring) || vendor.contains(substring) || categoryNames.contains(substring) || storeName.contains(substring));
+    }
 }
