@@ -52,33 +52,39 @@ public class ProductSearchService {
         List<String> substrings = generateSubstrings(query);
 
         List<Map<String, Object>> matchedByName = products.stream()
-                .filter(product -> ((String) product.get("name")).toLowerCase().contains(substrings.get(0))) // Match name by first substring
+                .filter(product -> ((String) product.get("name")).toLowerCase().contains(substrings.get(0)))
                 .collect(Collectors.toList());
+
+        Set<String> substringSet = new HashSet<>(substrings);
 
         return matchedByName.stream()
-                .filter(product -> filterByBrandVendorCategoryAndStore(product, substrings))
+                .filter(product -> filterByBrandVendorCategoryAndStore(product, substringSet))
                 .collect(Collectors.toList());
     }
 
-    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, List<String> substrings) {
-        final String brand = ((String) product.get("brand")).toLowerCase();
-        final String vendor = ((String) product.get("vendor")).toLowerCase();
-
+    private boolean filterByBrandVendorCategoryAndStore(Map<String, Object> product, Set<String> querySubstrings) {
+        String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
+        String brand = Objects.requireNonNullElse((String) product.get("brand"), "").toLowerCase();
+        String vendor = Objects.requireNonNullElse((String) product.get("vendor"), "").toLowerCase();
         List<Map<String, Object>> categories = (List<Map<String, Object>>) product.get("category");
+        String store = Objects.requireNonNullElse(
+                product.containsKey("store") ? (String) ((Map<String, Object>) product.get("store")).get("name") : null,
+                ""
+        ).toLowerCase();
 
-        final String categoryNames;
-        if (categories != null) {
-            categoryNames = categories.stream()
-                    .map(category -> ((String) category.get("name")).toLowerCase())
-                    .collect(Collectors.joining(" "));
-        } else {
-            categoryNames = "";
-        }
+        List<String> categoryNames = categories != null
+                ? categories.stream()
+                .map(cat -> Objects.requireNonNullElse((String) cat.get("name"), "").toLowerCase())
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
-        Map<String, Object> store = (Map<String, Object>) product.get("store");
-        final String storeName = store != null ? ((String) store.get("name")).toLowerCase() : "";
-
-        return substrings.subList(1, substrings.size()).stream()
-                .anyMatch(substring -> brand.contains(substring) || vendor.contains(substring) || categoryNames.contains(substring) || storeName.contains(substring));
+        return querySubstrings.stream().anyMatch(substring ->
+                name.contains(substring) ||
+                        brand.contains(substring) ||
+                        vendor.contains(substring) ||
+                        categoryNames.stream().anyMatch(cat -> cat.contains(substring)) ||
+                        store.contains(substring)
+        );
     }
+
 }
