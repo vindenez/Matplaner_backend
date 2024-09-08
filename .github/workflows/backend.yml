@@ -12,25 +12,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check if SSH Key is available
-        run: |
-          if [ -z "${{ secrets.DOKKU_SSH_PRIVATE_KEY }}" ]; then
-            echo "SSH Key is missing."
-            exit 1
-          else
-            echo "SSH Key is available."
-          fi
-
       # Step 2: Set up JDK (Update to Java 22 if needed)
-      #- name: Set up JDK 22
-      #  uses: actions/setup-java@v2
-      #  with:
-      #    distribution: 'temurin'
-      #    java-version: '22'
+      - name: Set up JDK 22
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '22'
 
       # Step 3: Build with Maven
-      #- name: Build with Maven
-      #  run: mvn clean install -DskipTests
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
 
       # Step 4: Set up SSH agent to access Dokku server
       - name: Set up SSH agent
@@ -47,4 +38,3 @@ jobs:
       - name: Post-Deploy Health Check
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DOKKU_USER }}@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
-          
