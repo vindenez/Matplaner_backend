@@ -1,0 +1,43 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+
+      - name: Build Docker image
+        run: docker build -t your-spring-boot-app .
+
+      - name: Deploy to DigitalOcean
+        run: |
+          scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }}:/root/docker-compose.yml
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "docker-compose -f /root/docker-compose.yml pull && docker-compose -f /root/docker-compose.yml up -d"
+
+      - name: Set Environment Variables
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+            export SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            export SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }} \
+            export SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
+            export SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }} \
+            export REDIS_HOST=${{ secrets.REDIS_HOST }} \
+            export REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+            export REDIS_PORT=${{ secrets.REDIS_PORT }} \
+            export REDIS_URL=${{ secrets.REDIS_URL }} \
+            export DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+            export DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+            && docker-compose -f /root/docker-compose.yml up -d"
