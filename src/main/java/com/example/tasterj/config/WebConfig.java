@@ -18,7 +18,8 @@ public class WebConfig {
                                 "https://tasterj.space/",
                                 "https://matplaner.no/",
                                 "https://www.matplaner.no/",
-                                "https://www.matplaner.no")
+                                "https://www.matplaner.no",
+                                "https://matplaner-backend.matplaner.no")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
