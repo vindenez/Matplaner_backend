@@ -12,29 +12,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up JDK (Update to Java 22 if needed)
-      - name: Set up JDK 22
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '22'
-
-      # Step 3: Build with Maven
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
-
-      # Step 4: Set up SSH agent to access Dokku server
+      # Step 2: Set up SSH agent to access Dokku server
       - name: Set up SSH agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
 
-      # Step 5: Deploy to Dokku
+      # Step 3: Deploy to Dokku
       - name: Deploy to Dokku
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DOKKU_USER }}@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku git:sync ${{ secrets.DOKKU_APP_NAME }} main"
 
-      # Step 6: Health check (optional, but useful to confirm deployment success)
+      # Step 4: Set multiple environment variables in Dokku
+      - name: Set environment variables in Dokku
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DOKKU_USER }}@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
+          "dokku config:set ${{ secrets.DOKKU_APP_NAME }} \
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+          SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }} \
+          SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
+          SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }} \
+          REDIS_HOST=${{ secrets.API_URL }} \
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+          REDIS_PORT=${{ secrets.REDIS_PORT }} \
+          REDIS_URL=${{ secrets.REDIS_URL }} \
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+          DATABASE_URL=${{ secrets.DATABASE_URL }} \
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}"
+          
+
+      # Step 5: Health check (optional)
       - name: Post-Deploy Health Check
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DOKKU_USER }}@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
