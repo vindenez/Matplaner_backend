@@ -1,10 +1,10 @@
 version: '3'
 services:
   spring-boot-app:
-    image: tasterj
+    image: matlplaner-backend
     ports:
       - "8080:8080"
-    container_name: tasterj
+    container_name: matplaner-backend
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}

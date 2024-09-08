@@ -30,15 +30,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
 
-      # Build the Docker image
-      - name: Build Docker image
-        run: docker build -t your-spring-boot-app .
+      # Build the Docker image on the Droplet (this ensures it is built locally)
+      - name: Build Docker image on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          cd /root/matplaner-backend && docker build -t matplaner-backend ."
 
-      # Deploy the Docker image to DigitalOcean
+      # Deploy the Docker image using Docker Compose on the droplet
       - name: Deploy to DigitalOcean
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }}:/root/docker-compose.yml
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "docker-compose -f /root/docker-compose.yml pull && docker-compose -f /root/docker-compose.yml up -d"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          docker-compose -f /root/docker-compose.yml up -d"
 
       # Set environment variables and ensure they are available for the application
       - name: Set Environment Variables
