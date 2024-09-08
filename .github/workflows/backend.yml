@@ -40,11 +40,11 @@ jobs:
         run: |
           git remote add dokku ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}
 
-      # Step 5: Fetch and merge the latest changes from Dokku
+      # Step 5: Fetch and merge the latest changes from Dokku, allowing unrelated histories
       - name: Fetch and merge Dokku changes
         run: |
           git fetch dokku
-          git merge dokku/master
+          git merge --allow-unrelated-histories dokku/master
 
       # Step 6: Push to Dokku (after environment variables are set and merge is complete)
       - name: Push to Dokku
