@@ -1,33 +1,31 @@
-name: 'Dokku / DigitalOcean deployment'
+name: Dokku / DigitalOcean deployment
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Dokku
-        uses: dokku/github-action@v1.5.0
-
-      # Step 1: Checkout the code
-      - name: Checkout repo
+      # Step 1: Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      - id: deploy
-        name: Deploy to dokku
-        uses: idoberko2/dokku-deploy-github-action@v1
+      # Step 2: Set up SSH agent to access Dokku server
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
-          dokku-host: ${{ secrets.DOKKU_HOST }}
-          app-name: ${{ secrets.APP_NAME }}
-          git-push-flags: '--force'
 
-      # Step 3: (Optional) Set environment variables in Dokku
+      # Step 3: Push to Dokku
+      - name: Push to Dokku
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}'
+          ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+
+      # Step 4: Set multiple environment variables in Dokku
       - name: Set environment variables in Dokku
         run: |
           ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
@@ -40,11 +38,12 @@ jobs:
           REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
           REDIS_PORT=${{ secrets.REDIS_PORT }} \
           REDIS_URL=${{ secrets.REDIS_URL }} \
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+          DATABASE_URL=${{ secrets.DATABASE_URL }} \
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
-          DATABASE_URL=${{ secrets.DATABASE_URL }}"
+          API_URL=${{ secrets.API_URL }}"
 
-      # Step 4: (Optional) Health check
-      - name: Dokku Health Check
+      # Step 5: Health check (optional)
+      - name: Post-Deploy Health Check
         run: |
-          ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
-          "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
+          ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
