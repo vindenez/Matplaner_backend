@@ -14,8 +14,12 @@ jobs:
 
       - name: Check if SSH Key is available
         run: |
-          echo "SSH Key Length: ${#secrets.DOKKU_SSH_PRIVATE_KEY}"
-
+          if [ -z "${{ secrets.DOKKU_SSH_PRIVATE_KEY }}" ]; then
+            echo "SSH Key is missing."
+            exit 1
+          else
+            echo "SSH Key is available."
+          fi
 
       # Step 2: Set up JDK (Update to Java 22 if needed)
       #- name: Set up JDK 22
