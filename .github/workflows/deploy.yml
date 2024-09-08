@@ -30,11 +30,21 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
 
-      # Build the Docker image on the Droplet (this ensures it is built locally)
+      # Clone the repository on the droplet (or pull latest changes if already cloned)
+      - name: Clone or Update Repository on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          if [ ! -d /root/matplaner-backend ]; then
+            git clone https://github.com/vindenez/Matplaner_backend.git /root/matplaner-backend;
+          else
+            cd /root/matplaner-backend && git pull origin main;
+          fi"
+
+      # Build the Docker image on the Droplet (tasterj project)
       - name: Build Docker image on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
-          cd /root/matplaner-backend && docker build -t matplaner-backend ."
+          cd /root/matplaner-backend/tasterj && docker build -t matplaner-backend ."
 
       # Deploy the Docker image using Docker Compose on the droplet
       - name: Deploy to DigitalOcean
