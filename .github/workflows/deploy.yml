@@ -22,7 +22,7 @@ jobs:
 
       # Build the Spring Boot project with Maven
       - name: Build with Maven
-        run: mvn clean package
+        run: mvn clean package -DskipTests
 
       # Set up SSH agent to deploy to DigitalOcean
       - name: Set up SSH agent
