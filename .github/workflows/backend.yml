@@ -11,6 +11,8 @@ jobs:
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # Step 2: Set up SSH agent to access Dokku server
       - name: Set up SSH agent
@@ -18,7 +20,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
 
-      # Step 3: Set environment variables in Dokku (before push)
+      # Step 3: Push to Dokku
+      - name: Push to Dokku
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}'
+          ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+
+      # Step 4: Set multiple environment variables in Dokku
       - name: Set environment variables in Dokku
         run: |
           ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
@@ -34,18 +43,3 @@ jobs:
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
           DATABASE_URL=${{ secrets.DATABASE_URL }} \
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-
-      # Step 4: Add Dokku remote (if needed)
-      - name: Add Dokku remote
-        run: |
-          git remote add dokku ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }} || true
-
-      # Step 5: Push to Dokku (triggers build with updated environment variables)
-      - name: Push to Dokku
-        run: |
-          git push dokku master --force
-
-      # Step 6: (Optional) Health check
-      - name: Post-Deploy Health Check
-        run: |
-          ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
