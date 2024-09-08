@@ -75,4 +75,3 @@ jobs:
             export DATABASE_URL=${{ secrets.DATABASE_URL }} \
             export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
             && docker-compose -f /root/docker-compose.yml up -d"
-          
