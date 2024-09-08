@@ -9,18 +9,23 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     steps:
+      - name: Dokku
+        uses: dokku/github-action@v1.5.0
+
       # Step 1: Checkout the code
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Step 2: Deploy to Dokku
-      - name: Push to Dokku
-        uses: dokku/github-action@master
+      - id: deploy
+        name: Deploy to dokku
+        uses: idoberko2/dokku-deploy-github-action@v1
         with:
-          git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/{{ secrets.DOKKU_APP_NAME }}'
-          ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+          dokku-host: ${{ secrets.DOKKU_HOST }}
+          app-name: ${{ secrets.APP_NAME }}
+          git-push-flags: '--force'
 
       # Step 3: (Optional) Set environment variables in Dokku
       - name: Set environment variables in Dokku
