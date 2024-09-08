@@ -18,6 +18,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '22'
+          distribution: 'temurin'
 
       # Build the Spring Boot project with Maven
       - name: Build with Maven
