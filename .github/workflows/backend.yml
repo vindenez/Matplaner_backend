@@ -40,8 +40,7 @@ jobs:
           REDIS_URL=${{ secrets.REDIS_URL }} \
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
           DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
-          API_URL=${{ secrets.API_URL }}"
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} 
 
       # Step 5: Health check (optional)
       - name: Post-Deploy Health Check
