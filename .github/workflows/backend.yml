@@ -40,8 +40,8 @@ jobs:
         run: |
           git remote add dokku ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }} || true
 
-      # Step 5: Force push to Dokku (replace the existing code on Dokku)
-      - name: Force Push to Dokku
+      # Step 5: Push to Dokku (triggers build with updated environment variables)
+      - name: Push to Dokku
         run: |
           git push dokku master --force
 
