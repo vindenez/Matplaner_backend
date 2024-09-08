@@ -11,8 +11,6 @@ jobs:
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       # Step 2: Set up SSH agent to access Dokku server
       - name: Set up SSH agent
@@ -20,18 +18,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
 
-      # Step 3: Push to Dokku
-      - name: Push to Dokku
-        uses: dokku/github-action@master
-        with:
-          git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}'
-          ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
-
-      # Step 4: Set multiple environment variables in Dokku
+      # Step 3: Set environment variables in Dokku (before push)
       - name: Set environment variables in Dokku
         run: |
           ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
-          "dokku config:set ${{ secrets.DOKKU_APP_NAME }} \
+          dokku config:set ${{ secrets.DOKKU_APP_NAME }} \
           SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
           SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }} \
           SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
@@ -42,4 +33,16 @@ jobs:
           REDIS_URL=${{ secrets.REDIS_URL }} \
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
           DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}"
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+
+      # Step 4: Push to Dokku (after environment variables are set)
+      - name: Push to Dokku
+        uses: dokku/github-action@master
+        with:
+          git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}'
+          ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+
+      # Step 5: (Optional) Health check
+      - name: Post-Deploy Health Check
+        run: |
+          ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
