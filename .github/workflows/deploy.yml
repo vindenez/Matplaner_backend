@@ -34,17 +34,17 @@ jobs:
       - name: Clone or Update Repository on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
-          if [ ! -d /root/matplaner-backend ]; then
-            git clone https://github.com/vindenez/Matplaner_backend.git /root/matplaner-backend;
+          if [ ! -d /root/Matplaner_backend ]; then
+            git clone https://github.com/vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
-            cd /root/matplaner-backend && git pull origin main;
+            cd /root/Matplaner_backend && git pull origin main;
           fi"
 
-      # Build the Docker image on the Droplet (tasterj project)
+      # Build the Docker image on the Droplet
       - name: Build Docker image on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
-          cd /root/matplaner-backend/tasterj && docker build -t matplaner-backend ."
+          cd /root/Matplaner_backend && docker build -t matplaner-backend ."
 
       # Deploy the Docker image using Docker Compose on the droplet
       - name: Deploy to DigitalOcean
