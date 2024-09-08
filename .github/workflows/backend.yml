@@ -35,20 +35,25 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }} \
           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
 
-      # Step 4: Fetch and merge the latest changes from Dokku
+      # Step 4: Add Dokku remote
+      - name: Add Dokku remote
+        run: |
+          git remote add dokku ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}
+
+      # Step 5: Fetch and merge the latest changes from Dokku
       - name: Fetch and merge Dokku changes
         run: |
           git fetch dokku
           git merge dokku/master
 
-      # Step 5: Push to Dokku (after environment variables are set and merge is complete)
+      # Step 6: Push to Dokku (after environment variables are set and merge is complete)
       - name: Push to Dokku
         uses: dokku/github-action@master
         with:
           git_remote_url: 'ssh://dokku@${{ secrets.DOKKU_HOST }}:${{ secrets.DOKKU_PORT }}/${{ secrets.DOKKU_APP_NAME }}'
           ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
 
-      # Step 6: (Optional) Health check
+      # Step 7: (Optional) Health check
       - name: Post-Deploy Health Check
         run: |
           ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
