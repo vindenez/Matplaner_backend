@@ -32,19 +32,14 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} \
           "dokku config:set ${{ secrets.DOKKU_APP_NAME }} \
-          SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-          SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }} \
-          SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
-          SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }} \
-          REDIS_HOST=${{ secrets.REDIS_HOST }} \
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
-          REDIS_PORT=${{ secrets.REDIS_PORT }} \
-          REDIS_URL=${{ secrets.REDIS_URL }} \
-          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-          DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} 
-
-      # Step 5: Health check (optional)
-      - name: Post-Deploy Health Check
-        run: |
-          ssh -o StrictHostKeyChecking=no dokku@${{ secrets.DOKKU_HOST }} -p ${{ secrets.DOKKU_PORT }} "dokku ps:report ${{ secrets.DOKKU_APP_NAME }}"
+          SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
+          SUPABASE_JWT_SECRET='${{ secrets.SUPABASE_JWT_SECRET }}' \
+          SUPABASE_API_KEY='${{ secrets.SUPABASE_API_KEY }}' \
+          SUPABASE_BUCKET='${{ secrets.SUPABASE_BUCKET }}' \
+          REDIS_HOST='${{ secrets.REDIS_HOST }}' \
+          REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
+          REDIS_PORT='${{ secrets.REDIS_PORT }}' \
+          REDIS_URL='${{ secrets.REDIS_URL }}' \
+          DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' \
+          DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+          DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}'"
