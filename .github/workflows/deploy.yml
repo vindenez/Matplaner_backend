@@ -30,16 +30,25 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
 
+      # Optional: Check if the SSH key was correctly added to the agent
+      - name: List SSH Keys in Agent
+        run: ssh-add -l
+
       # Add the GitHub Actions SSH key for cloning the repository
       - name: Set up GitHub SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
 
+      # Test SSH connection with debugging (before running other commands)
+      - name: Test SSH connection to Droplet
+        run: |
+          ssh -v -o StrictHostKeyChecking=no root@167.99.210.156 "whoami"
+
       # Clone the repository on the droplet (or pull latest changes if already cloned)
       - name: Clone or Update Repository on Droplet
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          ssh -v -o StrictHostKeyChecking=no root@167.99.210.156 "
           if [ ! -d /root/Matplaner_backend ]; then
             git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
@@ -49,20 +58,20 @@ jobs:
       # Build the Docker image on the Droplet
       - name: Build Docker image on Droplet
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          ssh -v -o StrictHostKeyChecking=no root@167.99.210.156 "
           cd /root/Matplaner_backend && docker build -t matplaner-backend ."
 
       # Deploy the Docker image using Docker Compose on the droplet
       - name: Deploy the Docker image using Docker Compose
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }}:/root/docker-compose.yml
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          scp -o StrictHostKeyChecking=no docker-compose.yml root@167.99.210.156:/root/docker-compose.yml
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
           docker-compose -f /root/docker-compose.yml up -d"
 
       # Set environment variables and ensure they are available for the application
       - name: Set Environment Variables
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
+          ssh -v -o StrictHostKeyChecking=no root@167.99.210.156 "
             export SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             export SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }} \
             export SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
@@ -75,4 +84,3 @@ jobs:
             export DATABASE_URL=${{ secrets.DATABASE_URL }} \
             export DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
             && docker-compose -f /root/docker-compose.yml up -d"
-          
