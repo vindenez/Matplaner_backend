@@ -25,17 +25,23 @@ jobs:
         run: mvn clean package -DskipTests
 
       # Set up SSH agent to deploy to DigitalOcean
-      - name: Set up SSH agent
+      - name: Set up SSH agent for DigitalOcean
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+
+      # Add the GitHub Actions SSH key for cloning the repository
+      - name: Set up GitHub SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
 
       # Clone the repository on the droplet (or pull latest changes if already cloned)
       - name: Clone or Update Repository on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
           if [ ! -d /root/Matplaner_backend ]; then
-            git clone https://github.com/vindenez/Matplaner_backend.git /root/Matplaner_backend;
+            git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
             cd /root/Matplaner_backend && git pull origin main;
           fi"
@@ -47,7 +53,7 @@ jobs:
           cd /root/Matplaner_backend && docker build -t matplaner-backend ."
 
       # Deploy the Docker image using Docker Compose on the droplet
-      - name: Deploy to DigitalOcean
+      - name: Deploy the Docker image using Docker Compose
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }}:/root/docker-compose.yml
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SSH_HOST }} "
