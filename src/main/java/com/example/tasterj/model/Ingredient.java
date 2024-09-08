@@ -40,6 +40,10 @@ public class Ingredient {
     @Column(nullable = false)
     private IngredientUnit unit;
 
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
     public Ingredient() {
         this.id = UUID.randomUUID().toString();
     }

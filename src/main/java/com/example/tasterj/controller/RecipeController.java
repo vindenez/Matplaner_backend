@@ -19,6 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.tasterj.model.SavedRecipe;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -112,6 +115,26 @@ public class RecipeController {
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to delete image: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/save")
+    public boolean saveRecipe(@RequestParam String userId, @RequestParam String recipeId) {
+        return recipeService.saveRecipeForUser(userId, recipeId);
+    }
+
+    @DeleteMapping("/save/remove")
+    public boolean removeSavedRecipe(@RequestParam String userId, @RequestParam String recipeId) {
+        return recipeService.removeSavedRecipeForUser(userId, recipeId);
+    }
+
+    @GetMapping("/save/list")
+    public List<SavedRecipe> getSavedRecipes(@RequestParam String userId) {
+        return recipeService.getSavedRecipesForUser(userId);
+    }
+
+    @GetMapping("/save/is-saved")
+    public boolean isRecipeSaved(@RequestParam String userId, @RequestParam String recipeId) {
+        return recipeService.isRecipeSavedByUser(userId, recipeId);
     }
 
 }

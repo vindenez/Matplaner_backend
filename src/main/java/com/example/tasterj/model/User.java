@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
+
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -22,5 +24,8 @@ public class User {
 
     @Column(nullable = false)
     private String name;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<SavedRecipe> savedRecipes;
 
 }
