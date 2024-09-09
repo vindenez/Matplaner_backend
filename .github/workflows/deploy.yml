@@ -25,22 +25,30 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # Set up SSH agent for DigitalOcean
+      # Set up SSH agent to deploy to DigitalOcean
       - name: Set up SSH agent for DigitalOcean
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
 
-      # Optional: Check if the SSH key was correctly added to the agent
-      - name: List SSH Keys in Agent
-        run: ssh-add -l
+      # Copy private key to the Droplet and set correct permissions
+      - name: Copy SSH Private Key to Droplet
+        run: |
+          scp -o StrictHostKeyChecking=no ~/.ssh/github_droplet_key root@167.99.210.156:/root/.ssh/github_droplet_key
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "chmod 600 /root/.ssh/github_droplet_key"
+
+      # Add the SSH key to the agent on the Droplet
+      - name: Add SSH Key to Agent on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+            eval \$(ssh-agent -s) &&
+            ssh-add /root/.ssh/github_droplet_key &&
+            ssh -T git@github.com"
 
       # Clone or Update Repository on Droplet
       - name: Clone or Update Repository on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          mkdir -p ~/.ssh &&
-          ssh-keyscan github.com >> ~/.ssh/known_hosts &&
           if [ ! -d /root/Matplaner_backend ]; then
             git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
