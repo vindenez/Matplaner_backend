@@ -40,14 +40,15 @@ public class ProductController {
                     .body("Search query exceeds character limit of " + QUERY_CHAR_LIMIT + " characters.");
         }
 
-        List<Map<String, Object>> results = productSearchService.searchProducts(query, selectedStores, page, pageSize);
+        Map<String, Object> searchResult = productSearchService.searchProducts(query, selectedStores, page, pageSize);
 
-        if (results.isEmpty()) {
+        if (((List<?>) searchResult.get("products")).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No products found for the given query.");
         }
 
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(searchResult);
     }
+
 
 
 

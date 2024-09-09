@@ -48,7 +48,7 @@ public class ProductSearchService {
         return substrings;
     }
 
-    public List<Map<String, Object>> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
+    public Map<String, Object> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
         Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
 
         // Step 1: Filter products that match both the product name and brand/vendor/store/category
@@ -56,7 +56,7 @@ public class ProductSearchService {
                 .filter(product -> filterByBrandVendorCategoryAndStore(product, querySubstrings))
                 .collect(Collectors.toList());
 
-        // Step 2: If products match both conditions, return those products
+        // Step 2: If no products match both conditions, return products that match the query substrings in the name only
         if (filteredProducts.isEmpty()) {
             filteredProducts = products.stream()
                     .filter(product -> productMatchesName(product, new ArrayList<>(querySubstrings)))
@@ -74,15 +74,25 @@ public class ProductSearchService {
         }
 
         int totalProducts = filteredProducts.size();
+
+        // Step 4: Implement pagination
         int startIndex = (page - 1) * pageSize;
         int endIndex = Math.min(startIndex + pageSize, totalProducts);
 
-        if (startIndex >= totalProducts) {
-            return Collections.emptyList();
-        }
+        List<Map<String, Object>> paginatedProducts = startIndex >= totalProducts
+                ? Collections.emptyList()
+                : filteredProducts.subList(startIndex, endIndex);
 
-        return filteredProducts.subList(startIndex, endIndex);
+        // Step 5: Create response with paginated products and metadata
+        Map<String, Object> response = new HashMap<>();
+        response.put("products", paginatedProducts);
+        response.put("totalItems", totalProducts);
+        response.put("totalPages", (int) Math.ceil((double) totalProducts / pageSize));
+        response.put("currentPage", page);
+
+        return response;
     }
+
 
 
 
