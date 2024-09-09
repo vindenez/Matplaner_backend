@@ -14,25 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up JDK 22 to compile the Spring Boot project
-      - name: Set up JDK 22
-        uses: actions/setup-java@v2
-        with:
-          java-version: '22'
-          distribution: 'temurin'
-
-      # Build the Spring Boot project with Maven
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
-
-      # List the contents of the target directory to verify JAR generation
-      - name: List target directory contents
-        run: ls -al target
-
-      # List the contents of the root project directory before Docker build
-      - name: List project directory contents
-        run: ls -al
-
       # Set up SSH agent to deploy to DigitalOcean
       - name: Set up SSH agent for DigitalOcean
         uses: webfactory/ssh-agent@v0.5.3
@@ -65,11 +46,12 @@ jobs:
             cd /root/Matplaner_backend && git pull origin main;
           fi"
 
-      # List project directory contents on Droplet to check the build context
-      - name: List project directory contents on Droplet
+      # Run Maven Build on the Droplet
+      - name: Run Maven Build on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          cd /root/Matplaner_backend && ls -al"
+          cd /root/Matplaner_backend &&
+          ./mvnw clean package -DskipTests"
 
       # List target directory on Droplet to verify the JAR file is present
       - name: List target directory contents on Droplet
