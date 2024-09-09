@@ -10,6 +10,9 @@ import com.example.tasterj.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -48,8 +51,19 @@ public class RecipeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
     }
 
+    public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {
+        return recipeRepository.findByUser_SupabaseUserId(userId, pageable);
+    }
     @Transactional
-    public Recipe createRecipe(String userId, CreateRecipeDto createRecipeDto) {
+    public Recipe createRecipe(CreateRecipeDto createRecipeDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Recipe recipe = new Recipe();
         recipe.setId(UUID.randomUUID().toString());
         recipe.setUserId(userId);
@@ -77,12 +91,22 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-
-
     @Transactional
     public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        if (!recipe.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to update this recipe");
+        }
 
         if (updateRecipeDto.getName() != null) {
             recipe.setName(updateRecipeDto.getName());
@@ -97,8 +121,9 @@ public class RecipeService {
             recipe.setTags(updateRecipeDto.getTags());
         }
 
+        // Update ingredients if provided
         if (updateRecipeDto.getIngredients() != null) {
-            ingredientRepository.deleteByRecipeId(recipe.getId());
+            ingredientRepository.deleteByRecipeId(recipe.getId()); // Clear previous ingredients
             recipe.setIngredients(updateRecipeDto.getIngredients().stream().map(dto -> {
                 Ingredient ingredient = new Ingredient();
                 ingredient.setId(UUID.randomUUID().toString());
@@ -112,7 +137,6 @@ public class RecipeService {
             }).collect(Collectors.toList()));
         }
 
-
         if (updateRecipeDto.getImageUrl() != null && !updateRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(updateRecipeDto.getImageUrl());
         }
@@ -120,11 +144,39 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+
+
     @Transactional
     public void deleteRecipe(String id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = null;
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            userId = jwtAuth.getTokenAttributes().get("sub").toString(); // Assuming "sub" contains the userId
+        }
+
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        if (!recipe.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this recipe");
+        }
+
         recipeRepository.delete(recipe);
+    }
+
+
+    public Page<SavedRecipe> getSavedRecipesForUser(String userId, Pageable pageable) {
+        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+        if (userOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+        return savedRecipeRepository.findByUser(userOpt.get(), pageable);
     }
 
     public boolean saveRecipeForUser(String userId, String recipeId) {
@@ -135,7 +187,6 @@ public class RecipeService {
             User user = userOpt.get();
             Recipe recipe = recipeOpt.get();
 
-            // Check if the user has already saved the recipe
             if (savedRecipeRepository.findByUserAndRecipe(user, recipe).isEmpty()) {
                 SavedRecipe savedRecipe = new SavedRecipe();
                 savedRecipe.setUser(user);
@@ -164,11 +215,6 @@ public class RecipeService {
             }
         }
         return false;
-    }
-
-    public List<SavedRecipe> getSavedRecipesForUser(String userId) {
-        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
-        return userOpt.map(savedRecipeRepository::findByUser).orElse(List.of());
     }
 
     public boolean isRecipeSavedByUser(String userId, String recipeId) {

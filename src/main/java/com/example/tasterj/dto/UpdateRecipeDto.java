@@ -12,21 +12,20 @@ import java.util.List;
 @Setter
 public class UpdateRecipeDto {
 
-    // Getters and Setters
     @JsonProperty("name")
-    @Size(min = 1, max = 255)
+    @Size(max = 255)
     private String name;
 
     @JsonProperty("description")
-    @Size(min = 1, max = 255)
+    @Size(max = 255)
     private String description;
 
     @JsonProperty("instructions")
-    @Size(min = 1, max = 2083)
+    @Size(max = 2083)
     private String instructions;
 
     @JsonProperty("tags")
-    private List<@Size(min = 1, max = 255) String> tags;
+    private List<@Size(max = 255) String> tags;
 
     @JsonProperty("ingredients")
     private List<@Valid CreateIngredientDto> ingredients;

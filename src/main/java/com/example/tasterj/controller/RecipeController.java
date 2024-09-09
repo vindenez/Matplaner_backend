@@ -36,6 +36,36 @@ public class RecipeController {
     @Autowired
     private ImageService imageService;
 
+    // Fetch all recipes created by a specific user with pagination (default 20 per page)
+    @GetMapping("/user-recipes")
+    public ResponseEntity<Page<Recipe>> getUserRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = null;
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            userId = jwtAuth.getTokenAttributes().get("sub").toString(); // Assuming "sub" contains the userId
+        }
+
+        if (userId == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Recipe> userRecipes = recipeService.getUserRecipes(userId, pageable);
+
+        if (userRecipes.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(userRecipes, HttpStatus.OK);
+    }
+
+
+    // Get all recipes (with pagination, default 20 per page)
     @GetMapping
     public ResponseEntity<Page<Recipe>> getRecipes(@RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size) {
@@ -44,26 +74,22 @@ public class RecipeController {
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
+    // Get recipe by ID
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable String id) {
         Recipe recipe = recipeService.getRecipeById(id);
         return new ResponseEntity<>(recipe, HttpStatus.OK);
     }
 
+    // Create a new recipe
     @PostMapping("/create")
     public ResponseEntity<Recipe> createRecipe(@RequestPart("createRecipeDto") @Valid CreateRecipeDto createRecipeDto) {
-        String userId = createRecipeDto.getUserId();
-        User user = userService.getUserBySupabaseUserId(userId);
-
-        if (user == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        Recipe recipe = recipeService.createRecipe(user.getSupabaseUserId(), createRecipeDto);
-
+        Recipe recipe = recipeService.createRecipe(createRecipeDto);
         return new ResponseEntity<>(recipe, HttpStatus.CREATED);
     }
 
+
+    // Update an existing recipe (only if owned by the user)
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> updateRecipe(
             @PathVariable String id,
@@ -73,12 +99,19 @@ public class RecipeController {
         return new ResponseEntity<>(updatedRecipe, HttpStatus.OK);
     }
 
+    // Delete a recipe (only if owned by the user)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRecipe(@PathVariable String id) {
+    public ResponseEntity<Void> deleteRecipe(@PathVariable String id, @RequestParam String userId) {
+        Recipe existingRecipe = recipeService.getRecipeById(id);
+        if (existingRecipe == null || !existingRecipe.getUserId().equals(userId)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         recipeService.deleteRecipe(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    // Upload recipe image
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadRecipeImage(@RequestParam("file") MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -103,6 +136,7 @@ public class RecipeController {
     }
 
 
+    // Delete recipe image
     @PostMapping("/delete-image")
     public ResponseEntity<String> deleteRecipeImage(@RequestParam("imageUrl") String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
@@ -117,21 +151,35 @@ public class RecipeController {
         }
     }
 
+    // Save a recipe for the user
     @PostMapping("/save")
     public boolean saveRecipe(@RequestParam String userId, @RequestParam String recipeId) {
         return recipeService.saveRecipeForUser(userId, recipeId);
     }
 
+    // Remove a saved recipe
     @DeleteMapping("/save/remove")
     public boolean removeSavedRecipe(@RequestParam String userId, @RequestParam String recipeId) {
         return recipeService.removeSavedRecipeForUser(userId, recipeId);
     }
 
+    // Fetch saved recipes for a user with pagination
     @GetMapping("/save/list")
-    public List<SavedRecipe> getSavedRecipes(@RequestParam String userId) {
-        return recipeService.getSavedRecipesForUser(userId);
+    public ResponseEntity<Page<SavedRecipe>> getSavedRecipes(
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SavedRecipe> savedRecipes = recipeService.getSavedRecipesForUser(userId, pageable);
+
+        if (savedRecipes.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(savedRecipes, HttpStatus.OK);
     }
 
+    // Check if a recipe is saved
     @GetMapping("/save/is-saved")
     public boolean isRecipeSaved(@RequestParam String userId, @RequestParam String recipeId) {
         return recipeService.isRecipeSavedByUser(userId, recipeId);
