@@ -36,6 +36,7 @@ public class RecipeController {
     @Autowired
     private ImageService imageService;
 
+
     // Fetch all recipes created by a specific user with pagination (default 20 per page)
     @GetMapping("/user-recipes")
     public ResponseEntity<Page<Recipe>> getUserRecipes(
@@ -63,7 +64,6 @@ public class RecipeController {
 
         return new ResponseEntity<>(userRecipes, HttpStatus.OK);
     }
-
 
     // Get all recipes (with pagination, default 20 per page)
     @GetMapping
@@ -187,7 +187,7 @@ public class RecipeController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<Recipe>> searchRecipes(
-            @RequestParam String query,
+            @RequestParam(required = false, defaultValue = "") String query,  // Allow empty query
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "2") int maxDistance,
@@ -199,4 +199,5 @@ public class RecipeController {
         Page<Recipe> recipes = recipeService.searchRecipes(query, maxDistance, minPrice, maxPrice, sortDirection, pageable);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
+    
 }

@@ -56,4 +56,13 @@ public class Recipe {
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SavedRecipe> savedByUsers;
+
+    @Column(name = "stored_price", nullable = false)
+    private double storedPrice = 0.0;
+
+    @Column(name = "current_price", nullable = false)
+    private double currentPrice = 0.0;
+
+    @Column(name = "price_last_updated")
+    private LocalDateTime priceLastUpdated;
 }

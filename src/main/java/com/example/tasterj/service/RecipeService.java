@@ -4,6 +4,7 @@ import com.example.tasterj.dto.CreateRecipeDto;
 import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.exception.ResourceNotFoundException;
 import com.example.tasterj.model.*;
+
 import com.example.tasterj.repository.RecipeRepository;
 import com.example.tasterj.repository.IngredientRepository;
 import com.example.tasterj.repository.UserRepository;
@@ -19,7 +20,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.example.tasterj.repository.SavedRecipeRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,15 +43,24 @@ public class RecipeService {
     private IngredientRepository ingredientRepository;
 
     @Autowired
-    private ImageService imageService;
+    private ProductDataService productDataService;
 
     public Page<Recipe> getRecipes(Pageable pageable) {
         return recipeRepository.findAll(pageable);
     }
 
+    @Transactional
     public Recipe getRecipeById(String id) {
-        return recipeRepository.findById(id)
+        Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // Fetch the ingredients for this recipe
+        List<Ingredient> ingredients = ingredientRepository.findByRecipeId(id);
+
+        // Update the recipe price based on the ingredients and their products
+        updateRecipePrice(recipe, ingredients);
+
+        return recipe;
     }
 
     public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {
@@ -234,19 +246,54 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+    @Transactional
     public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
-        Sort sort;
-        if ("desc".equalsIgnoreCase(sortDirection)) {
-            sort = Sort.by("current_price").descending();
-        } else {
-            sort = Sort.by("current_price").ascending();
-        }
+        Sort sort = "desc".equalsIgnoreCase(sortDirection) ? Sort.by("storedPrice").descending() : Sort.by("storedPrice").ascending();
 
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        List<Recipe> recipes = recipeRepository.findByNameOrTagsFuzzyWithPriceFilter(query, maxDistance, minPrice, maxPrice, sortedPageable);
+        List<Recipe> recipes = recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
 
         return new PageImpl<>(recipes, sortedPageable, recipes.size());
+    }
+
+    private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
+        List<Map<String, Object>> products = productDataService.getProducts();
+        double currentPrice = calculateCurrentPrice(ingredients, products);
+        recipe.setCurrentPrice(currentPrice);
+
+        if (recipe.getStoredPrice() == 0 || Math.abs(currentPrice - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
+            recipe.setStoredPrice(currentPrice);
+        }
+
+        recipe.setPriceLastUpdated(LocalDateTime.now());
+        recipeRepository.save(recipe);
+    }
+
+
+    private double calculateCurrentPrice(List<Ingredient> ingredients, List<Map<String, Object>> products) {
+        double currentPrice = 0.0;
+
+        for (Ingredient ingredient : ingredients) {
+            Map<String, Object> product = findProductByEan(products, ingredient.getEan());
+
+            if (product != null) {
+                Double productPrice = (Double) product.get("price");
+                if (productPrice != null) {
+                    currentPrice += productPrice;
+                }
+            }
+        }
+
+        return currentPrice;
+    }
+
+
+    private Map<String, Object> findProductByEan(List<Map<String, Object>> products, String ean) {
+        return products.stream()
+                .filter(product -> ean.equals(product.get("ean")))
+                .findFirst()
+                .orElse(null);
     }
 
 
