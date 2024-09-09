@@ -37,15 +37,4 @@ public class Product {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.id == null) {
-            this.id = UUID.randomUUID().toString();
-        }
-    }
-
-    public Product() {
-        this.id = UUID.randomUUID().toString();
-    }
 }
