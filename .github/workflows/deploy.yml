@@ -38,6 +38,8 @@ jobs:
       - name: Clone or Update Repository on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          mkdir -p ~/.ssh &&
+          ssh-keyscan github.com >> ~/.ssh/known_hosts &&
           if [ ! -d /root/Matplaner_backend ]; then
             git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
