@@ -34,6 +34,11 @@ jobs:
             eval \$(ssh-agent -s) &&
             ssh-add /root/.ssh/github_droplet_key &&
             ssh -T git@github.com || true"
+          
+      - name: Stop and remove old containers
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          docker-compose down --volumes --remove-orphans"
 
       # Clone or Update Repository on Droplet
       - name: Clone or Update Repository on Droplet

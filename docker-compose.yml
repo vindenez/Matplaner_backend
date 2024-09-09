@@ -3,7 +3,7 @@ services:
   spring-boot-app:
     build:
       context: .
-    image: matplaner-backend
+    image: matplaner_backend
     ports:
       - "8080:8080"
     environment:
