@@ -235,8 +235,19 @@ public class RecipeService {
     }
 
     public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
-        List<Recipe> recipes = recipeRepository.findByNameOrTagsFuzzyWithPriceFilter(query, maxDistance, minPrice, maxPrice, sortDirection, pageable);
-        return new PageImpl<>(recipes, pageable, recipes.size());
+        Sort sort;
+        if ("desc".equalsIgnoreCase(sortDirection)) {
+            sort = Sort.by("current_price").descending();
+        } else {
+            sort = Sort.by("current_price").ascending();
+        }
+
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        List<Recipe> recipes = recipeRepository.findByNameOrTagsFuzzyWithPriceFilter(query, maxDistance, minPrice, maxPrice, sortedPageable);
+
+        return new PageImpl<>(recipes, sortedPageable, recipes.size());
     }
+
 
 }
