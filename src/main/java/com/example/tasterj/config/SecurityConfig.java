@@ -50,8 +50,7 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "https://matplaner.no",
                 "https://www.matplaner.no",
-                "https://www.matplaner.no/",
-                "https://matplaner-backend.matplaner.no"));
+                "https://www.matplaner.no/"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
