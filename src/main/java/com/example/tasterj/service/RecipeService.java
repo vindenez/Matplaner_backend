@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.example.tasterj.repository.SavedRecipeRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,7 @@ public class RecipeService {
         recipe.setInstructions(createRecipeDto.getInstructions());
         recipe.setTags(createRecipeDto.getTags());
 
-        recipe.setIngredients(createRecipeDto.getIngredients().stream().map(dto -> {
+        List<Ingredient> ingredients = createRecipeDto.getIngredients().stream().map(dto -> {
             Ingredient ingredient = new Ingredient();
             ingredient.setId(UUID.randomUUID().toString());
             ingredient.setRecipe(recipe);
@@ -95,7 +96,16 @@ public class RecipeService {
             ingredient.setEan(dto.getEan());
             ingredient.setImage(dto.getImage());
             return ingredient;
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toList());
+
+        recipe.setIngredients(ingredients);
+
+        List<Map<String, Object>> products = productDataService.getProducts();
+
+        double currentPrice = calculateCurrentPrice(ingredients, products);
+        recipe.setCurrentPrice(currentPrice);
+        recipe.setStoredPrice(currentPrice);
+        recipe.setPriceLastUpdated(LocalDateTime.now());
 
         if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(createRecipeDto.getImageUrl());
@@ -134,10 +144,9 @@ public class RecipeService {
             recipe.setTags(updateRecipeDto.getTags());
         }
 
-        // Update ingredients if provided
         if (updateRecipeDto.getIngredients() != null) {
             ingredientRepository.deleteByRecipeId(recipe.getId()); // Clear previous ingredients
-            recipe.setIngredients(updateRecipeDto.getIngredients().stream().map(dto -> {
+            List<Ingredient> updatedIngredients = updateRecipeDto.getIngredients().stream().map(dto -> {
                 Ingredient ingredient = new Ingredient();
                 ingredient.setId(UUID.randomUUID().toString());
                 ingredient.setRecipe(recipe);
@@ -147,7 +156,18 @@ public class RecipeService {
                 ingredient.setEan(dto.getEan());
                 ingredient.setImage(dto.getImage());
                 return ingredient;
-            }).collect(Collectors.toList()));
+            }).collect(Collectors.toList());
+            recipe.setIngredients(updatedIngredients);
+
+            List<Map<String, Object>> products = productDataService.getProducts();
+            double currentPrice = calculateCurrentPrice(updatedIngredients, products);
+            recipe.setCurrentPrice(currentPrice);
+
+            if (recipe.getStoredPrice() == 0 || Math.abs(currentPrice - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
+                recipe.setStoredPrice(currentPrice);
+            }
+
+            recipe.setPriceLastUpdated(LocalDateTime.now());
         }
 
         if (updateRecipeDto.getImageUrl() != null && !updateRecipeDto.getImageUrl().isEmpty()) {
@@ -277,24 +297,24 @@ public class RecipeService {
         recipeRepository.save(recipe);
     }
 
-
     private double calculateCurrentPrice(List<Ingredient> ingredients, List<Map<String, Object>> products) {
-        double currentPrice = 0.0;
+        BigDecimal currentPrice = BigDecimal.ZERO;
 
         for (Ingredient ingredient : ingredients) {
             Map<String, Object> product = findProductByEan(products, ingredient.getEan());
-
             if (product != null) {
                 Double productPrice = (Double) product.get("price");
                 if (productPrice != null) {
-                    currentPrice += productPrice;
+                    BigDecimal productPriceBigDecimal = BigDecimal.valueOf(productPrice);
+                    BigDecimal ingredientAmountBigDecimal = BigDecimal.valueOf(ingredient.getAmount().doubleValue());
+
+                    currentPrice = currentPrice.add(productPriceBigDecimal.multiply(ingredientAmountBigDecimal));
                 }
             }
         }
 
-        return currentPrice;
+        return currentPrice.doubleValue();
     }
-
 
     private Map<String, Object> findProductByEan(List<Map<String, Object>> products, String ean) {
         return products.stream()
@@ -302,6 +322,5 @@ public class RecipeService {
                 .findFirst()
                 .orElse(null);
     }
-
 
 }
