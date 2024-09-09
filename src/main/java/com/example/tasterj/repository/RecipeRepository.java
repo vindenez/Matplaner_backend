@@ -24,6 +24,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
     @Query("SELECT r FROM Recipe r JOIN r.tags t WHERE (LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(t) LIKE LOWER(CONCAT('%', :query, '%'))) AND r.storedPrice BETWEEN :minPrice AND :maxPrice")
     List<Recipe> findByNameOrTagsWithPriceFilter(@Param("query") String query, @Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
 
+    @Query("SELECT r FROM Recipe r WHERE r.storedPrice BETWEEN :minPrice AND :maxPrice")
+    List<Recipe> findAllWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
+
 }
 
 

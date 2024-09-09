@@ -190,14 +190,13 @@ public class RecipeController {
             @RequestParam(required = false, defaultValue = "") String query,  // Allow empty query
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "2") int maxDistance,
             @RequestParam(defaultValue = "0") double minPrice,
             @RequestParam(defaultValue = "10000") double maxPrice,
             @RequestParam(defaultValue = "asc") String sortDirection) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Recipe> recipes = recipeService.searchRecipes(query, maxDistance, minPrice, maxPrice, sortDirection, pageable);
+        Page<Recipe> recipes = recipeService.searchRecipes(query, 0, minPrice, maxPrice, sortDirection, pageable);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
-    
+
 }

@@ -246,16 +246,23 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
         Sort sort = "desc".equalsIgnoreCase(sortDirection) ? Sort.by("storedPrice").descending() : Sort.by("storedPrice").ascending();
 
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        List<Recipe> recipes = recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+        List<Recipe> recipes;
+
+        if (query == null || query.trim().isEmpty()) {
+            recipes = recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable);
+        } else {
+            recipes = recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+        }
 
         return new PageImpl<>(recipes, sortedPageable, recipes.size());
     }
+
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
         List<Map<String, Object>> products = productDataService.getProducts();
