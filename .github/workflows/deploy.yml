@@ -25,13 +25,13 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      # List the contents of the target directory to verify JAR generation
       - name: List target directory contents
         run: ls -al target
 
-      # List project directory contents before Docker build
+      # List the contents of the root project directory before Docker build
       - name: List project directory contents
         run: ls -al
-
 
       # Set up SSH agent to deploy to DigitalOcean
       - name: Set up SSH agent for DigitalOcean
@@ -65,11 +65,24 @@ jobs:
             cd /root/Matplaner_backend && git pull origin main;
           fi"
 
+      # List project directory contents on Droplet to check the build context
+      - name: List project directory contents on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          cd /root/Matplaner_backend && ls -al"
+
+      # List target directory on Droplet to verify the JAR file is present
+      - name: List target directory contents on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          cd /root/Matplaner_backend/target && ls -al"
+
       # Build the Docker image on the Droplet
       - name: Build Docker image on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          cd /root/Matplaner_backend && docker build -t matplaner-backend ."
+          cd /root/Matplaner_backend &&
+          docker build -t matplaner-backend ."
 
       # Create or Update .env file on the Droplet to store environment variables
       - name: Create or Update .env file on Droplet
@@ -87,7 +100,7 @@ jobs:
           echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' >> /root/.env &&
           echo 'DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}' >> /root/.env"
 
-      # Deploy the Docker image using Docker Compose on the droplet
+      # Deploy the Docker image using Docker Compose on the Droplet
       - name: Deploy the Docker image using Docker Compose
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "

@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy the packaged jar file into the container
 COPY target/tasterj-0.0.1-SNAPSHOT.jar /app/spring-boot-app.jar
 
+
 # Expose the port the app runs on
 EXPOSE 8080
 
