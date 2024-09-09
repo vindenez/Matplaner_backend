@@ -187,7 +187,7 @@ public class RecipeController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<Recipe>> searchRecipes(
-            @RequestParam(required = false, defaultValue = "") String query,  // Allow empty query
+            @RequestParam(required = false, defaultValue = "") String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "0") double minPrice,

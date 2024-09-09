@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -33,5 +34,13 @@ public class UpdateRecipeDto {
     @JsonProperty("imageUrl")
     private String imageUrl;
 
+    @JsonProperty("currentPrice")
+    private double currentPrice;
+
+    @JsonProperty("storedPrice")
+    private double storedPrice;
+
+    @JsonProperty("priceLastUpdated")
+    private LocalDateTime priceLastUpdated;
 }
 
