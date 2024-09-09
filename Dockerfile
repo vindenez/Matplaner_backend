@@ -1,4 +1,4 @@
-# Use an OpenJDK 22 runtime as a parent image
+# Use an OpenJDK 17 runtime as a parent image
 FROM eclipse-temurin:22-jdk-alpine
 
 # Set the working directory in the container
