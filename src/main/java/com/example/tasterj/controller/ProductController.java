@@ -29,13 +29,18 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchProducts(@RequestParam String query) {
+    public ResponseEntity<?> searchProducts(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int pageSize,
+            @RequestParam(required = false) List<String> selectedStores) {
+
         if (query.length() > QUERY_CHAR_LIMIT) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Search query exceeds character limit of " + QUERY_CHAR_LIMIT + " characters.");
         }
 
-        List<Map<String, Object>> results = productSearchService.searchProducts(query);
+        List<Map<String, Object>> results = productSearchService.searchProducts(query, selectedStores, page, pageSize);
 
         if (results.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No products found for the given query.");
@@ -43,6 +48,8 @@ public class ProductController {
 
         return ResponseEntity.ok(results);
     }
+
+
 
 
 }

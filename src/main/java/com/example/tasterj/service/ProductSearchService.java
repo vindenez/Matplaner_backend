@@ -48,8 +48,7 @@ public class ProductSearchService {
         return substrings;
     }
 
-    public List<Map<String, Object>> searchProducts(String query) {
-        // Generate substrings from the search query
+    public List<Map<String, Object>> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
         Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
 
         // Step 1: Filter products that match both the product name and brand/vendor/store/category
@@ -58,15 +57,34 @@ public class ProductSearchService {
                 .collect(Collectors.toList());
 
         // Step 2: If products match both conditions, return those products
-        if (!filteredProducts.isEmpty()) {
-            return filteredProducts;
+        if (filteredProducts.isEmpty()) {
+            filteredProducts = products.stream()
+                    .filter(product -> productMatchesName(product, new ArrayList<>(querySubstrings)))
+                    .collect(Collectors.toList());
         }
 
-        // Step 3: If no products match both conditions, return products that match the query substrings in the name only
-        return products.stream()
-                .filter(product -> productMatchesName(product, new ArrayList<>(querySubstrings)))
-                .collect(Collectors.toList());
+        // Step 3: Filter by selected stores if the list is not empty
+        if (selectedStores != null && !selectedStores.isEmpty()) {
+            filteredProducts = filteredProducts.stream()
+                    .filter(product -> {
+                        String storeName = (String) ((Map<String, Object>) product.get("store")).get("name");
+                        return selectedStores.contains(storeName);
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        int totalProducts = filteredProducts.size();
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, totalProducts);
+
+        if (startIndex >= totalProducts) {
+            return Collections.emptyList();
+        }
+
+        return filteredProducts.subList(startIndex, endIndex);
     }
+
+
 
     private boolean productMatchesName(Map<String, Object> product, List<String> substrings) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
