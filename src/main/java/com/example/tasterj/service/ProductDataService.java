@@ -18,7 +18,8 @@ public class ProductDataService {
     private ResourceLoader resourceLoader;
 
     public List<Map<String, Object>> getProducts() {
-        return loadJson("classpath:products.json");
+        Map<String, Object> jsonMap = loadJson("classpath:products.json");
+        return (List<Map<String, Object>>) jsonMap.get("data");
     }
 
     public Map<String, List<String>> getBrands() {
