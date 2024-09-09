@@ -67,11 +67,9 @@ public class RecipeService {
     public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {
         return recipeRepository.findByUser_SupabaseUserId(userId, pageable);
     }
-
     @Transactional
     public Recipe createRecipe(CreateRecipeDto createRecipeDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (!(authentication instanceof JwtAuthenticationToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
@@ -86,6 +84,9 @@ public class RecipeService {
         recipe.setInstructions(createRecipeDto.getInstructions());
         recipe.setTags(createRecipeDto.getTags());
 
+        List<Map<String, Object>> products = productDataService.getProducts();
+        final double[] totalCurrentPrice = {0.0};
+
         List<Ingredient> ingredients = createRecipeDto.getIngredients().stream().map(dto -> {
             Ingredient ingredient = new Ingredient();
             ingredient.setId(UUID.randomUUID().toString());
@@ -95,16 +96,21 @@ public class RecipeService {
             ingredient.setUnit(dto.getUnit());
             ingredient.setEan(dto.getEan());
             ingredient.setImage(dto.getImage());
+
+            Map<String, Object> product = findProductByEan(products, dto.getEan());
+            if (product != null) {
+                Double productPrice = (Double) product.get("current_price");
+                if (productPrice != null) {
+                    totalCurrentPrice[0] += productPrice;
+                }
+            }
+
             return ingredient;
         }).collect(Collectors.toList());
 
         recipe.setIngredients(ingredients);
-
-        List<Map<String, Object>> products = productDataService.getProducts();
-
-        double currentPrice = calculateCurrentPrice(ingredients, products);
-        recipe.setCurrentPrice(currentPrice);
-        recipe.setStoredPrice(currentPrice);
+        recipe.setCurrentPrice(totalCurrentPrice[0]);
+        recipe.setStoredPrice(totalCurrentPrice[0]);
         recipe.setPriceLastUpdated(LocalDateTime.now());
 
         if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
@@ -114,16 +120,15 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+
     @Transactional
     public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (!(authentication instanceof JwtAuthenticationToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
 
         String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
-
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
 
@@ -145,7 +150,10 @@ public class RecipeService {
         }
 
         if (updateRecipeDto.getIngredients() != null) {
-            ingredientRepository.deleteByRecipeId(recipe.getId()); // Clear previous ingredients
+            ingredientRepository.deleteByRecipeId(recipe.getId());
+            List<Map<String, Object>> products = productDataService.getProducts();
+            final double[] totalCurrentPrice = {0.0};
+
             List<Ingredient> updatedIngredients = updateRecipeDto.getIngredients().stream().map(dto -> {
                 Ingredient ingredient = new Ingredient();
                 ingredient.setId(UUID.randomUUID().toString());
@@ -155,16 +163,23 @@ public class RecipeService {
                 ingredient.setUnit(dto.getUnit());
                 ingredient.setEan(dto.getEan());
                 ingredient.setImage(dto.getImage());
+
+                Map<String, Object> product = findProductByEan(products, dto.getEan());
+                if (product != null) {
+                    Double productPrice = (Double) product.get("current_price");
+                    if (productPrice != null) {
+                        totalCurrentPrice[0] += productPrice;
+                    }
+                }
+
                 return ingredient;
             }).collect(Collectors.toList());
+
             recipe.setIngredients(updatedIngredients);
+            recipe.setCurrentPrice(totalCurrentPrice[0]);
 
-            List<Map<String, Object>> products = productDataService.getProducts();
-            double currentPrice = calculateCurrentPrice(updatedIngredients, products);
-            recipe.setCurrentPrice(currentPrice);
-
-            if (recipe.getStoredPrice() == 0 || Math.abs(currentPrice - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
-                recipe.setStoredPrice(currentPrice);
+            if (recipe.getStoredPrice() == 0 || Math.abs(totalCurrentPrice[0] - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
+                recipe.setStoredPrice(totalCurrentPrice[0]);
             }
 
             recipe.setPriceLastUpdated(LocalDateTime.now());
@@ -178,6 +193,45 @@ public class RecipeService {
     }
 
 
+    private void populateRecipeFromDto(Recipe recipe, CreateRecipeDto createRecipeDto) {
+        recipe.setName(createRecipeDto.getName());
+        recipe.setDescription(createRecipeDto.getDescription());
+        recipe.setInstructions(createRecipeDto.getInstructions());
+        recipe.setTags(createRecipeDto.getTags());
+
+        List<Map<String, Object>> products = productDataService.getProducts();
+        final double[] totalCurrentPrice = {0.0};
+
+        List<Ingredient> ingredients = createRecipeDto.getIngredients().stream().map(dto -> {
+            Ingredient ingredient = new Ingredient();
+            ingredient.setId(UUID.randomUUID().toString());
+            ingredient.setRecipe(recipe);
+            ingredient.setName(dto.getName());
+            ingredient.setAmount(dto.getAmount());
+            ingredient.setUnit(dto.getUnit());
+            ingredient.setEan(dto.getEan());
+            ingredient.setImage(dto.getImage());
+
+            Map<String, Object> product = findProductByEan(products, dto.getEan());
+
+            if (product != null) {
+                Double productPrice = (Double) product.get("current_price");
+                if (productPrice != null) {
+                    totalCurrentPrice[0] += productPrice;
+                }
+            }
+            return ingredient;
+        }).collect(Collectors.toList());
+
+        recipe.setIngredients(ingredients);
+        recipe.setCurrentPrice(totalCurrentPrice[0]);
+        recipe.setStoredPrice(totalCurrentPrice[0]);
+        recipe.setPriceLastUpdated(LocalDateTime.now());
+
+        if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
+            recipe.setImageUrl(createRecipeDto.getImageUrl());
+        }
+    }
 
     @Transactional
     public void deleteRecipe(String id) {
