@@ -1,6 +1,5 @@
 package com.example.tasterj.service;
 
-import com.example.tasterj.model.Product;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;

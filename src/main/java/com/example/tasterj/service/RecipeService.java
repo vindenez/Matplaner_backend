@@ -6,14 +6,12 @@ import com.example.tasterj.exception.ResourceNotFoundException;
 import com.example.tasterj.model.*;
 import com.example.tasterj.repository.RecipeRepository;
 import com.example.tasterj.repository.IngredientRepository;
-import com.example.tasterj.repository.ProductRepository;
 import com.example.tasterj.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.example.tasterj.repository.SavedRecipeRepository;
@@ -37,9 +35,6 @@ public class RecipeService {
 
     @Autowired
     private IngredientRepository ingredientRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
 
     @Autowired
     private ImageService imageService;
@@ -72,11 +67,6 @@ public class RecipeService {
             ingredient.setUnit(dto.getUnit());
             ingredient.setEan(dto.getEan());
             ingredient.setImage(dto.getImage());
-
-            Product product = productRepository.findByEan(dto.getEan())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with ean: " + dto.getEan()));
-            ingredient.setProduct(product);
-
             return ingredient;
         }).collect(Collectors.toList()));
 

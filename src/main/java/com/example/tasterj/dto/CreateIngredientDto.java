@@ -35,8 +35,4 @@ public class CreateIngredientDto {
     @NotNull
     private IngredientUnit unit;
 
-    @JsonProperty("product_id")
-    @NotNull
-    private String productId;
-
 }
