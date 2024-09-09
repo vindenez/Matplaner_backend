@@ -2,12 +2,11 @@ package com.example.tasterj.service;
 
 import com.example.tasterj.dto.CreateRecipeDto;
 import com.example.tasterj.dto.UpdateRecipeDto;
-import com.example.tasterj.model.Recipe;
-import com.example.tasterj.model.Ingredient;
-import com.example.tasterj.model.SavedRecipe;
-import com.example.tasterj.model.User;
+import com.example.tasterj.exception.ResourceNotFoundException;
+import com.example.tasterj.model.*;
 import com.example.tasterj.repository.RecipeRepository;
 import com.example.tasterj.repository.IngredientRepository;
+import com.example.tasterj.repository.ProductRepository;
 import com.example.tasterj.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,6 +39,9 @@ public class RecipeService {
     private IngredientRepository ingredientRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private ImageService imageService;
 
     public Page<Recipe> getRecipes(Pageable pageable) {
@@ -70,15 +72,22 @@ public class RecipeService {
             ingredient.setUnit(dto.getUnit());
             ingredient.setEan(dto.getEan());
             ingredient.setImage(dto.getImage());
+
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + dto.getProductId()));
+            ingredient.setProduct(product);  // Assign the product to the ingredient
+
             return ingredient;
         }).collect(Collectors.toList()));
 
+        // Set imageUrl if provided
         if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(createRecipeDto.getImageUrl());
         }
 
-        return recipeRepository.save(recipe);
+        return recipeRepository.save(recipe);  // Save the recipe
     }
+
 
     @Transactional
     public Recipe updateRecipe(String id, UpdateRecipeDto updateRecipeDto) {
