@@ -31,11 +31,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
 
-      # Copy private key to the Droplet and set correct permissions
-      - name: Copy SSH Private Key to Droplet
+      # Create SSH Private Key on the Droplet and set correct permissions
+      - name: Create SSH Private Key on Droplet
         run: |
-          scp -o StrictHostKeyChecking=no ~/.ssh/github_droplet_key root@167.99.210.156:/root/.ssh/github_droplet_key
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "chmod 600 /root/.ssh/github_droplet_key"
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          echo '${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}' > /root/.ssh/github_droplet_key &&
+          chmod 600 /root/.ssh/github_droplet_key"
 
       # Add the SSH key to the agent on the Droplet
       - name: Add SSH Key to Agent on Droplet
