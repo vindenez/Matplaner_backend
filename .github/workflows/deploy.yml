@@ -50,6 +50,7 @@ jobs:
       - name: Clone or Update Repository on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          export GIT_SSH_COMMAND='ssh -i /root/.ssh/github_droplet_key -o StrictHostKeyChecking=no' &&
           if [ ! -d /root/Matplaner_backend ]; then
             git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
           else
