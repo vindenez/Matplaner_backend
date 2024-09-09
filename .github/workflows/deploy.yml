@@ -70,8 +70,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
           cd /root/Matplaner_backend &&
-          docker build -t matplaner-backend . &&
-          docker images"
+          docker-compose build &&
+          docker-compose up -d"
 
       # Check if the Docker container is running
       - name: List running Docker containers
