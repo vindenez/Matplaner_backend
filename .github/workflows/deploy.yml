@@ -1,109 +1,28 @@
-name: Deploy to DigitalOcean
+name: Backend CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up SSH agent to deploy to DigitalOcean
-      - name: Set up SSH agent for DigitalOcean
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: Set up JDK 22
+        uses: actions/setup-java@v2
         with:
-          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
+          distribution: 'temurin'
+          java-version: '22'
 
-      # Create SSH Private Key on the Droplet and set correct permissions
-      - name: Create SSH Private Key on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          echo '${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}' > /root/.ssh/github_droplet_key &&
-          chmod 600 /root/.ssh/github_droplet_key"
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
 
-      # Add the SSH key to the agent on the Droplet
-      - name: Add SSH Key to Agent on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-            eval \$(ssh-agent -s) &&
-            ssh-add /root/.ssh/github_droplet_key &&
-            ssh -T git@github.com || true"
-          
-      - name: Stop and remove old containers
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          docker-compose down --volumes --remove-orphans"
-
-      # Clone or Update Repository on Droplet
-      - name: Clone or Update Repository on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          export GIT_SSH_COMMAND='ssh -i /root/.ssh/github_droplet_key -o StrictHostKeyChecking=no' &&
-          if [ ! -d /root/Matplaner_backend ]; then
-            git clone git@github.com:vindenez/Matplaner_backend.git /root/Matplaner_backend;
-          else
-            cd /root/Matplaner_backend && git pull origin main;
-          fi"
-
-      # Export environment variables from the .env file
-      # Create or Update .env file on the Droplet to store environment variables
-      - name: Create or Update .env file on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          echo 'SUPABASE_URL=${{ secrets.SUPABASE_URL }}' > /root/Matplaner_backend/.env &&
-          echo 'SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}' >> /root/Matplaner_backend/.env &&
-          echo 'SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}' >> /root/Matplaner_backend/.env &&
-          echo 'SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }}' >> /root/Matplaner_backend/.env &&
-          echo 'REDIS_HOST=${{ secrets.REDIS_HOST }}' >> /root/Matplaner_backend/.env &&
-          echo 'REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}' >> /root/Matplaner_backend/.env &&
-          echo 'REDIS_PORT=${{ secrets.REDIS_PORT }}' >> /root/Matplaner_backend/.env &&
-          echo 'REDIS_URL=${{ secrets.REDIS_URL }}' >> /root/Matplaner_backend/.env &&
-          echo 'DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}' >> /root/Matplaner_backend/.env &&
-          echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' >> /root/Matplaner_backend/.env &&
-          echo 'DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}' >> /root/Matplaner_backend/.env"
-      
-
-      # Run Maven Build on the Droplet with environment variables set
-      - name: Run Maven Build on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          cd /root/Matplaner_backend &&
-          ./mvnw clean package -DskipTests"
-
-      # List target directory on Droplet to verify the JAR file is present
-      - name: List target directory contents on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          cd /root/Matplaner_backend/target && ls -al"
-
-      # Build the Docker image on the Droplet with Debugging
-      - name: Build Docker image on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          cd /root/Matplaner_backend &&
-          docker-compose build &&
-          docker-compose up -d"
-
-      # Check if the Docker container is running
-      - name: List running Docker containers
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          docker ps -a"
-
-      # Deploy the Docker image using Docker Compose on the Droplet
-      - name: Deploy the Docker image using Docker Compose
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          docker-compose -f /root/docker-compose.yml up -d"
-
-      # Check Docker logs after deployment for any errors
-      - name: Check Docker Compose logs
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          docker-compose -f /root/docker-compose.yml logs"
+      - name: Deploy to Heroku
+        uses: AkhileshNS/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          heroku_app_name: matplaner
