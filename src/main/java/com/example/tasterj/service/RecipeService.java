@@ -8,8 +8,8 @@ import com.example.tasterj.repository.RecipeRepository;
 import com.example.tasterj.repository.IngredientRepository;
 import com.example.tasterj.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -232,6 +232,11 @@ public class RecipeService {
     @Transactional
     public Recipe saveRecipe(Recipe recipe) {
         return recipeRepository.save(recipe);
+    }
+
+    public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
+        List<Recipe> recipes = recipeRepository.findByNameOrTagsFuzzyWithPriceFilter(query, maxDistance, minPrice, maxPrice, sortDirection, pageable);
+        return new PageImpl<>(recipes, pageable, recipes.size());
     }
 
 }
