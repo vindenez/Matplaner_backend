@@ -47,7 +47,6 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
                 "https://tasterj.space",
-                "http://localhost:3000",
                 "https://matplaner.no",
                 "https://www.matplaner.no",
                 "https://www.matplaner.no/"));

@@ -3,8 +3,13 @@ package com.example.tasterj.dto;
 import com.example.tasterj.model.IngredientUnit;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
+@Getter
+@Setter
 public class CreateIngredientDto {
 
     @JsonProperty("ean")
@@ -30,45 +35,8 @@ public class CreateIngredientDto {
     @NotNull
     private IngredientUnit unit;
 
+    @JsonProperty("product_id")
+    @NotNull
+    private String productId;
 
-    // Getters and Setters
-    public String getEan() {
-        return ean;
-    }
-
-    public void setEan(String ean) {
-        this.ean = ean;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public IngredientUnit getUnit() {
-        return unit;
-    }
-
-    public void setUnit(IngredientUnit unit) {
-        this.unit = unit;
-    }
 }
