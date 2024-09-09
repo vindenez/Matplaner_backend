@@ -46,7 +46,29 @@ jobs:
             cd /root/Matplaner_backend && git pull origin main;
           fi"
 
-      # Run Maven Build on the Droplet
+      # Create or Update .env file on the Droplet to store environment variables
+      - name: Create or Update .env file on Droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          echo 'SUPABASE_URL=${{ secrets.SUPABASE_URL }}' > /root/.env &&
+          echo 'SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}' >> /root/.env &&
+          echo 'SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}' >> /root/.env &&
+          echo 'SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }}' >> /root/.env &&
+          echo 'REDIS_HOST=${{ secrets.REDIS_HOST }}' >> /root/.env &&
+          echo 'REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}' >> /root/.env &&
+          echo 'REDIS_PORT=${{ secrets.REDIS_PORT }}' >> /root/.env &&
+          echo 'REDIS_URL=${{ secrets.REDIS_URL }}' >> /root/.env &&
+          echo 'DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}' >> /root/.env &&
+          echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' >> /root/.env &&
+          echo 'DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}' >> /root/.env"
+
+      # Export environment variables from the .env file
+      - name: Export environment variables
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
+          export $(cat /root/.env | xargs)"
+
+      # Run Maven Build on the Droplet with environment variables set
       - name: Run Maven Build on Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
@@ -65,22 +87,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
           cd /root/Matplaner_backend &&
           docker build -t matplaner-backend ."
-
-      # Create or Update .env file on the Droplet to store environment variables
-      - name: Create or Update .env file on Droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
-          echo 'SUPABASE_URL=${{ secrets.SUPABASE_URL }}' > /root/.env &&
-          echo 'SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}' >> /root/.env &&
-          echo 'SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}' >> /root/.env &&
-          echo 'SUPABASE_BUCKET=${{ secrets.SUPABASE_BUCKET }}' >> /root/.env &&
-          echo 'REDIS_HOST=${{ secrets.REDIS_HOST }}' >> /root/.env &&
-          echo 'REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}' >> /root/.env &&
-          echo 'REDIS_PORT=${{ secrets.REDIS_PORT }}' >> /root/.env &&
-          echo 'REDIS_URL=${{ secrets.REDIS_URL }}' >> /root/.env &&
-          echo 'DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}' >> /root/.env &&
-          echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' >> /root/.env &&
-          echo 'DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}' >> /root/.env"
 
       # Deploy the Docker image using Docker Compose on the Droplet
       - name: Deploy the Docker image using Docker Compose
