@@ -73,20 +73,20 @@ public class RecipeService {
             ingredient.setEan(dto.getEan());
             ingredient.setImage(dto.getImage());
 
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + dto.getProductId()));
-            ingredient.setProduct(product);  // Assign the product to the ingredient
+            Product product = productRepository.findByEan(dto.getEan())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with ean: " + dto.getEan()));
+            ingredient.setProduct(product);
 
             return ingredient;
         }).collect(Collectors.toList()));
 
-        // Set imageUrl if provided
         if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(createRecipeDto.getImageUrl());
         }
 
-        return recipeRepository.save(recipe);  // Save the recipe
+        return recipeRepository.save(recipe);
     }
+
 
 
     @Transactional

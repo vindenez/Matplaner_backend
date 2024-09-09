@@ -15,17 +15,14 @@ import java.util.UUID;
 public class Product {
 
     @Id
-    @Column(name = "id", updatable = false, nullable = false)
-    private String id;
+    @Column(name = "ean", updatable = false, nullable = false, length = 63)
+    private String ean;
 
     @Column(nullable = false, length = 255)
     private String name;
 
     @Column(nullable = true, length = 2083)
     private String imageUrl;
-
-    @Column(nullable = true, length = 63)
-    private String ean;
 
     @Column(nullable = false)
     private BigDecimal price;

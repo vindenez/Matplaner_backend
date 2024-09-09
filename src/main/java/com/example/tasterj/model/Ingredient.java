@@ -41,7 +41,7 @@ public class Ingredient {
     private IngredientUnit unit;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", referencedColumnName = "ean", nullable = false)
     private Product product;
 
     public Ingredient() {
