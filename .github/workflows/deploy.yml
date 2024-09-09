@@ -44,7 +44,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@167.99.210.156 "
             eval \$(ssh-agent -s) &&
             ssh-add /root/.ssh/github_droplet_key &&
-            ssh -T git@github.com"
+            ssh -T git@github.com || true"
 
       # Clone or Update Repository on Droplet
       - name: Clone or Update Repository on Droplet
