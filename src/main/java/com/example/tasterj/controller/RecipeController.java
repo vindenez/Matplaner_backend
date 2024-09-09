@@ -198,5 +198,4 @@ public class RecipeController {
         Page<Recipe> recipes = recipeService.searchRecipes(query, 0, minPrice, maxPrice, sortDirection, pageable);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
-
 }
