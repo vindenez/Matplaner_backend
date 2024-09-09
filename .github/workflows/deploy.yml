@@ -28,7 +28,7 @@ jobs:
       - name: Set up SSH agent for DigitalOcean
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_SSH_KEY }}
 
       # Optional: Check if the SSH key was correctly added to the agent
       - name: List SSH Keys in Agent
