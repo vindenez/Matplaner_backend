@@ -54,6 +54,7 @@ public class RecipeService {
     public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {
         return recipeRepository.findByUser_SupabaseUserId(userId, pageable);
     }
+
     @Transactional
     public Recipe createRecipe(CreateRecipeDto createRecipeDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -172,12 +173,11 @@ public class RecipeService {
 
 
     public Page<SavedRecipe> getSavedRecipesForUser(String userId, Pageable pageable) {
-        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
-        if (userOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        return savedRecipeRepository.findByUser(userOpt.get(), pageable);
+        User user = userRepository.findBySupabaseUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return savedRecipeRepository.findByUser(user, pageable);
     }
+
 
     public boolean saveRecipeForUser(String userId, String recipeId) {
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
