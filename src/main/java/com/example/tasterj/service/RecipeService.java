@@ -281,10 +281,20 @@ public class RecipeService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
-        Sort sort = "desc".equalsIgnoreCase(sortDirection)
-                ? Sort.by("storedPrice").descending()
-                : Sort.by("storedPrice").ascending();
+    public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortBy, String sortDirection, Pageable pageable) {
+        Sort sort;
+
+        if ("price".equalsIgnoreCase(sortBy)) {
+            sort = "desc".equalsIgnoreCase(sortDirection)
+                    ? Sort.by("storedPrice").descending()
+                    : Sort.by("storedPrice").ascending();
+        } else if ("date".equalsIgnoreCase(sortBy)) {
+            sort = "desc".equalsIgnoreCase(sortDirection)
+                    ? Sort.by("createdAt").descending()
+                    : Sort.by("createdAt").ascending();
+        } else {
+            throw new IllegalArgumentException("Invalid sortBy parameter. Use 'price' or 'date'.");
+        }
 
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
@@ -296,6 +306,9 @@ public class RecipeService {
             throw new RuntimeException("Search failed", e);
         }
     }
+
+
+
 
 
 
