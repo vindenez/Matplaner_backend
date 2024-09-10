@@ -193,46 +193,6 @@ public class RecipeService {
     }
 
 
-    private void populateRecipeFromDto(Recipe recipe, CreateRecipeDto createRecipeDto) {
-        recipe.setName(createRecipeDto.getName());
-        recipe.setDescription(createRecipeDto.getDescription());
-        recipe.setInstructions(createRecipeDto.getInstructions());
-        recipe.setTags(createRecipeDto.getTags());
-
-        List<Map<String, Object>> products = productDataService.getProducts();
-        final double[] totalCurrentPrice = {0.0};
-
-        List<Ingredient> ingredients = createRecipeDto.getIngredients().stream().map(dto -> {
-            Ingredient ingredient = new Ingredient();
-            ingredient.setId(UUID.randomUUID().toString());
-            ingredient.setRecipe(recipe);
-            ingredient.setName(dto.getName());
-            ingredient.setAmount(dto.getAmount());
-            ingredient.setUnit(dto.getUnit());
-            ingredient.setEan(dto.getEan());
-            ingredient.setImage(dto.getImage());
-
-            Map<String, Object> product = findProductByEan(products, dto.getEan());
-
-            if (product != null) {
-                Double productPrice = (Double) product.get("current_price");
-                if (productPrice != null) {
-                    totalCurrentPrice[0] += productPrice;
-                }
-            }
-            return ingredient;
-        }).collect(Collectors.toList());
-
-        recipe.setIngredients(ingredients);
-        recipe.setCurrentPrice(totalCurrentPrice[0]);
-        recipe.setStoredPrice(totalCurrentPrice[0]);
-        recipe.setPriceLastUpdated(LocalDateTime.now());
-
-        if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
-            recipe.setImageUrl(createRecipeDto.getImageUrl());
-        }
-    }
-
     @Transactional
     public void deleteRecipe(String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -322,20 +282,17 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
-        Sort sort = "desc".equalsIgnoreCase(sortDirection) ? Sort.by("storedPrice").descending() : Sort.by("storedPrice").ascending();
+        Sort sort = "desc".equalsIgnoreCase(sortDirection)
+                ? Sort.by("storedPrice").descending()
+                : Sort.by("storedPrice").ascending();
 
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        List<Recipe> recipes;
-
-        if (query == null || query.trim().isEmpty()) {
-            recipes = recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable);
-        } else {
-            recipes = recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
-        }
-
-        return new PageImpl<>(recipes, sortedPageable, recipes.size());
+        return (query == null || query.trim().isEmpty())
+                ? recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable)
+                : recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
     }
+
 
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {

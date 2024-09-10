@@ -18,15 +18,15 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
 
     Page<Recipe> findByUser_SupabaseUserId(String supabaseUserId, Pageable pageable);
 
-    Page<Recipe> findByNameContainingIgnoreCaseOrTagsContainingIgnoreCase(String name, String tag, Pageable pageable);
     Page<Recipe> findAll(Pageable pageable);
 
+    Page<Recipe> findByNameContainingIgnoreCaseOrTagsContainingIgnoreCase(String name, String tag, Pageable pageable);
+
     @Query("SELECT r FROM Recipe r JOIN r.tags t WHERE (LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(t) LIKE LOWER(CONCAT('%', :query, '%'))) AND r.storedPrice BETWEEN :minPrice AND :maxPrice")
-    List<Recipe> findByNameOrTagsWithPriceFilter(@Param("query") String query, @Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
+    Page<Recipe> findByNameOrTagsWithPriceFilter(@Param("query") String query, @Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
 
     @Query("SELECT r FROM Recipe r WHERE r.storedPrice BETWEEN :minPrice AND :maxPrice")
-    List<Recipe> findAllWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
-
+    Page<Recipe> findAllWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
 }
 
 
