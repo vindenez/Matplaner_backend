@@ -280,7 +280,7 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(rollbackFor = Exception.class)
     public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortDirection, Pageable pageable) {
         Sort sort = "desc".equalsIgnoreCase(sortDirection)
                 ? Sort.by("storedPrice").descending()
@@ -288,10 +288,15 @@ public class RecipeService {
 
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        return (query == null || query.trim().isEmpty())
-                ? recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable)
-                : recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+        try {
+            return (query == null || query.trim().isEmpty())
+                    ? recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable)
+                    : recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+        } catch (Exception e) {
+            throw new RuntimeException("Search failed", e);
+        }
     }
+
 
 
 
