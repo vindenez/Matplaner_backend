@@ -77,7 +77,7 @@ public class RecipeController {
     public ResponseEntity<RecipeWithProductInfo> getRecipeById(@PathVariable String id,
                                                                @RequestParam(defaultValue = "false") boolean includeProductInfo) {
 
-        RecipeWithProductInfo recipeWithProductInfo = recipeService.getRecipeWithProducts(id, includeProductInfo);
+        RecipeWithProductInfo recipeWithProductInfo = recipeService.getRecipeById(id, includeProductInfo);
         return new ResponseEntity<>(recipeWithProductInfo, HttpStatus.OK);
     }
 

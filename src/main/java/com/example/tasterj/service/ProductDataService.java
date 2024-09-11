@@ -1,4 +1,5 @@
 package com.example.tasterj.service;
+import com.example.tasterj.model.Ingredient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,17 +24,16 @@ public class ProductDataService {
         return (List<Map<String, Object>>) jsonMap.get("data");
     }
 
-    public List<Map<String, Object>> getProductsByEANs(List<String> eanList) {
+    public List<Map<String, Object>> getProductsByEANsAndStoreCodes(List<Ingredient> ingredients) {
         List<Map<String, Object>> allProducts = getProducts();
-        return allProducts.stream()
-                .filter(product -> {
-                    String productEan = (String) product.get("ean");
 
-                    return productEan != null && eanList.contains(productEan);
-                })
+        return ingredients.stream()
+                .flatMap(ingredient -> allProducts.stream()
+                        .filter(product -> ingredient.getEan().equals(product.get("ean")) &&
+                                ingredient.getStoreCode().equals(((Map<String, Object>) product.get("store")).get("code"))))
                 .collect(Collectors.toList());
-
     }
+
 
 
 
