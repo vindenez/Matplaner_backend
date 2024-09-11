@@ -212,7 +212,6 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-
     @Transactional
     public void deleteRecipe(String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
