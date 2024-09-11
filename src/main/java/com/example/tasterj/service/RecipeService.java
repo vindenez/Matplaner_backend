@@ -72,8 +72,6 @@ public class RecipeService {
 
         List<Ingredient> ingredients = ingredientRepository.findByRecipeId(id);
 
-        System.out.println("Ingredients: " + ingredients);
-
         updateRecipePrice(recipe, ingredients);
 
         if (includeProductInfo) {
@@ -337,8 +335,10 @@ public class RecipeService {
 
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
-        List<Map<String, Object>> products = productDataService.getProducts();
+        List<Map<String, Object>> products = productDataService.getProductsByEANsAndStoreCodes(ingredients);
+
         double currentPrice = calculateCurrentPrice(ingredients, products);
+
         recipe.setCurrentPrice(currentPrice);
 
         if (recipe.getStoredPrice() == 0 || Math.abs(currentPrice - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
@@ -346,16 +346,25 @@ public class RecipeService {
         }
 
         recipe.setPriceLastUpdated(LocalDateTime.now());
+
         recipeRepository.save(recipe);
     }
+
+
 
     private double calculateCurrentPrice(List<Ingredient> ingredients, List<Map<String, Object>> products) {
         BigDecimal currentPrice = BigDecimal.ZERO;
 
         for (Ingredient ingredient : ingredients) {
-            Map<String, Object> product = findProductByEan(products, ingredient.getEan());
+            Map<String, Object> product = products.stream()
+                    .filter(p -> ingredient.getEan().equals(p.get("ean")) &&
+                            (ingredient.getStoreCode() == null ||
+                                    ingredient.getStoreCode().equals(((Map<String, Object>) p.get("store")).get("code"))))
+                    .findFirst()
+                    .orElse(null);
+
             if (product != null) {
-                Double productPrice = (Double) product.get("price");
+                Double productPrice = (Double) product.get("current_price");
                 if (productPrice != null) {
                     BigDecimal productPriceBigDecimal = BigDecimal.valueOf(productPrice);
                     BigDecimal ingredientAmountBigDecimal = BigDecimal.valueOf(ingredient.getAmount().doubleValue());
