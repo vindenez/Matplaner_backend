@@ -14,12 +14,10 @@ import java.util.Optional;
 @Repository
 public interface SavedRecipeRepository extends JpaRepository<SavedRecipe, String> {
 
-    // Find saved recipes by user
     Page<SavedRecipe> findByUser(User user, Pageable pageable);
 
     Optional<SavedRecipe> findByUserAndRecipe(User user, Recipe recipe);
 
-    // Delete a saved recipe
     void deleteByUserAndRecipe(User user, Recipe recipe);
 }
 

@@ -1,6 +1,7 @@
 package com.example.tasterj.controller;
 
 import com.example.tasterj.dto.CreateRecipeDto;
+import com.example.tasterj.dto.RecipeWithProductInfo;
 import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.model.Recipe;
 import com.example.tasterj.model.User;
@@ -37,7 +38,6 @@ public class RecipeController {
     private ImageService imageService;
 
 
-    // Fetch all recipes created by a specific user with pagination (default 20 per page)
     @GetMapping("/user-recipes")
     public ResponseEntity<Page<Recipe>> getUserRecipes(
             @RequestParam(defaultValue = "0") int page,
@@ -65,7 +65,6 @@ public class RecipeController {
         return new ResponseEntity<>(userRecipes, HttpStatus.OK);
     }
 
-    // Get all recipes (with pagination, default 20 per page)
     @GetMapping
     public ResponseEntity<Page<Recipe>> getRecipes(@RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size) {
@@ -74,12 +73,14 @@ public class RecipeController {
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
-    // Get recipe by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Recipe> getRecipeById(@PathVariable String id) {
-        Recipe recipe = recipeService.getRecipeById(id);
-        return new ResponseEntity<>(recipe, HttpStatus.OK);
+    public ResponseEntity<RecipeWithProductInfo> getRecipeById(@PathVariable String id,
+                                                               @RequestParam(defaultValue = "false") boolean includeProductInfo) {
+
+        RecipeWithProductInfo recipeWithProductInfo = recipeService.getRecipeWithProducts(id, includeProductInfo);
+        return new ResponseEntity<>(recipeWithProductInfo, HttpStatus.OK);
     }
+
 
     // Create a new recipe
     @PostMapping("/create")

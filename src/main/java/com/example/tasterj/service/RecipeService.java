@@ -1,6 +1,7 @@
 package com.example.tasterj.service;
 
 import com.example.tasterj.dto.CreateRecipeDto;
+import com.example.tasterj.dto.RecipeWithProductInfo;
 import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.exception.ResourceNotFoundException;
 import com.example.tasterj.model.*;
@@ -64,6 +65,34 @@ public class RecipeService {
         return recipe;
     }
 
+    @Transactional
+    public RecipeWithProductInfo getRecipeWithProducts(String id, boolean includeProductInfo) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // Fetch the ingredients for this recipe
+        List<Ingredient> ingredients = ingredientRepository.findByRecipeId(id);
+
+        // Update recipe price based on the ingredients and their products
+        updateRecipePrice(recipe, ingredients);
+
+        if (includeProductInfo) {
+            List<String> eanList = ingredients.stream()
+                    .map(Ingredient::getEan)
+                    .collect(Collectors.toList());
+
+            // Fetch product info based on EANs
+            List<Map<String, Object>> productInfo = productDataService.getProductsByEANs(eanList);
+
+            // Return recipe with product info
+            return new RecipeWithProductInfo(recipe, productInfo);
+        }
+
+        // Return just the recipe without product info
+        return new RecipeWithProductInfo(recipe, null);
+    }
+
+    @Transactional
     public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {
         return recipeRepository.findByUser_SupabaseUserId(userId, pageable);
     }
