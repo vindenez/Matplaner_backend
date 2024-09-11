@@ -16,7 +16,7 @@ public class CreateIngredientDto {
     @Size(max = 63)
     private String ean;
 
-    @JsonProperty("ean")
+    @JsonProperty("storeCode")
     @Size(max = 63)
     private String storeCode;
 
