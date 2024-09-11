@@ -1,6 +1,7 @@
 package com.example.tasterj.controller;
 
 
+import com.example.tasterj.service.ProductDataService;
 import com.example.tasterj.service.ProductMatchService;
 import com.example.tasterj.service.ProductSearchService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class ProductController {
 
     @Autowired
     private ProductSearchService productSearchService;
+
+    @Autowired
+    private ProductDataService productDataService;
 
     @PostMapping("/match")
     public Map<String, List<Map<String, Object>>> getMatchedProducts(@RequestBody List<Map<String, String>> ingredients) {
@@ -49,9 +53,10 @@ public class ProductController {
         return ResponseEntity.ok(searchResult);
     }
 
-
-
-
+    @PostMapping("/by-eans")
+    public List<Map<String, Object>> getProductsByEANs(@RequestBody List<String> eanList) {
+        return productDataService.getProductsByEANs(eanList);
+    }
 
 }
 

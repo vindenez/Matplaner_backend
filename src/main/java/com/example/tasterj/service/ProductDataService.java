@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductDataService {
@@ -20,6 +21,13 @@ public class ProductDataService {
     public List<Map<String, Object>> getProducts() {
         Map<String, Object> jsonMap = loadJson("classpath:products.json");
         return (List<Map<String, Object>>) jsonMap.get("data");
+    }
+
+    public List<Map<String, Object>> getProductsByEANs(List<String> eanList) {
+        List<Map<String, Object>> allProducts = getProducts();
+        return allProducts.stream()
+                .filter(product -> eanList.contains(product.get("ean")))
+                .collect(Collectors.toList());
     }
 
     public Map<String, List<String>> getBrands() {
