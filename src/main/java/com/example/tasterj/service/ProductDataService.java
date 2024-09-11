@@ -27,12 +27,16 @@ public class ProductDataService {
     public List<Map<String, Object>> getProductsByEANsAndStoreCodes(List<Ingredient> ingredients) {
         List<Map<String, Object>> allProducts = getProducts();
 
-        return ingredients.stream()
-                .flatMap(ingredient -> allProducts.stream()
-                        .filter(product -> ingredient.getEan().equals(product.get("ean")) &&
-                                ingredient.getStoreCode().equals(((Map<String, Object>) product.get("store")).get("code"))))
+        return allProducts.stream()
+                .filter(product -> ingredients.stream().anyMatch(ingredient ->
+                        ingredient.getEan().equals(product.get("ean")) &&
+                                (ingredient.getStoreCode() == null ||
+                                        product.get("store") != null &&
+                                                ((Map<String, Object>) product.get("store")).get("code").equals(ingredient.getStoreCode()))))
                 .collect(Collectors.toList());
     }
+
+
 
 
 
