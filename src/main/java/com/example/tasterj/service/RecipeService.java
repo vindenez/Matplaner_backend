@@ -134,6 +134,7 @@ public class RecipeService {
             ingredient.setAmount(dto.getAmount());
             ingredient.setUnit(dto.getUnit());
             ingredient.setEan(dto.getEan());
+            ingredient.setStoreCode(dto.getStoreCode());
             ingredient.setImage(dto.getImage());
 
             Map<String, Object> product = findProductByEan(products, dto.getEan());
@@ -201,6 +202,7 @@ public class RecipeService {
                 ingredient.setAmount(dto.getAmount());
                 ingredient.setUnit(dto.getUnit());
                 ingredient.setEan(dto.getEan());
+                ingredient.setStoreCode(dto.getStoreCode());
                 ingredient.setImage(dto.getImage());
 
                 Map<String, Object> product = findProductByEan(products, dto.getEan());

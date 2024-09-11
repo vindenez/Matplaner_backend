@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class CreateIngredientDto {
+public class UpdateIngredientDto {
 
     @JsonProperty("ean")
     @Size(max = 63)

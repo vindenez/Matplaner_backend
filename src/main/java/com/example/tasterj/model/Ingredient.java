@@ -24,8 +24,7 @@ public class Ingredient {
     @JsonIgnore
     private Recipe recipe;
 
-    @Column(nullable = true, length = 63)
-    private String ean;
+
 
     @Column(nullable = false, length = 255)
     private String name;
@@ -39,6 +38,12 @@ public class Ingredient {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IngredientUnit unit;
+
+    @Column(nullable = true, length = 63)
+    private String ean;
+
+    @Column(nullable = true, length = 63)
+    private String storeCode;
 
     public Ingredient() {
         this.id = UUID.randomUUID().toString();
