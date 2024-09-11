@@ -37,10 +37,6 @@ public class ProductDataService {
     }
 
 
-
-
-
-
     public Map<String, List<String>> getBrands() {
         return loadJson("classpath:brands.json");
     }
