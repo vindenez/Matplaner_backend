@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import com.example.tasterj.repository.SavedRecipeRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +57,8 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
 
-        // Fetch the ingredients for this recipe
         List<Ingredient> ingredients = ingredientRepository.findByRecipeId(id);
 
-        // Update the recipe price based on the ingredients and their products
         updateRecipePrice(recipe, ingredients);
 
         return recipe;
@@ -328,53 +327,36 @@ public class RecipeService {
         }
     }
 
-
-
-
-
-
-
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
         List<Map<String, Object>> products = productDataService.getProductsByEANsAndStoreCodes(ingredients);
+        double currentPrice = calculateCurrentPrice(products);
 
-        double currentPrice = calculateCurrentPrice(ingredients, products);
-
-        recipe.setCurrentPrice(currentPrice);
+        recipe.setCurrentPrice(roundToTwoDecimalPlaces(currentPrice));
 
         if (recipe.getStoredPrice() == 0 || Math.abs(currentPrice - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
-            recipe.setStoredPrice(currentPrice);
+            recipe.setStoredPrice(roundToTwoDecimalPlaces(currentPrice));
         }
 
         recipe.setPriceLastUpdated(LocalDateTime.now());
-
         recipeRepository.save(recipe);
     }
 
-
-
-    private double calculateCurrentPrice(List<Ingredient> ingredients, List<Map<String, Object>> products) {
+    private double calculateCurrentPrice(List<Map<String, Object>> products) {
         BigDecimal currentPrice = BigDecimal.ZERO;
 
-        for (Ingredient ingredient : ingredients) {
-            Map<String, Object> product = products.stream()
-                    .filter(p -> ingredient.getEan().equals(p.get("ean")) &&
-                            (ingredient.getStoreCode() == null ||
-                                    ingredient.getStoreCode().equals(((Map<String, Object>) p.get("store")).get("code"))))
-                    .findFirst()
-                    .orElse(null);
-
-            if (product != null) {
-                Double productPrice = (Double) product.get("current_price");
-                if (productPrice != null) {
-                    BigDecimal productPriceBigDecimal = BigDecimal.valueOf(productPrice);
-                    BigDecimal ingredientAmountBigDecimal = BigDecimal.valueOf(ingredient.getAmount().doubleValue());
-
-                    currentPrice = currentPrice.add(productPriceBigDecimal.multiply(ingredientAmountBigDecimal));
-                }
+        for (Map<String, Object> product : products) {
+            Double productPrice = (Double) product.get("current_price");
+            if (productPrice != null) {
+                currentPrice = currentPrice.add(BigDecimal.valueOf(productPrice));
             }
         }
 
         return currentPrice.doubleValue();
+    }
+
+    private double roundToTwoDecimalPlaces(double value) {
+        BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
+        return roundedValue.doubleValue();
     }
 
     private Map<String, Object> findProductByEan(List<Map<String, Object>> products, String ean) {
