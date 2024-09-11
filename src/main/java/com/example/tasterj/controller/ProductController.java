@@ -53,10 +53,5 @@ public class ProductController {
         return ResponseEntity.ok(searchResult);
     }
 
-    @PostMapping("/by-eans")
-    public List<Map<String, Object>> getProductsByEANs(@RequestBody List<String> eanList) {
-        return productDataService.getProductsByEANs(eanList);
-    }
-
 }
 
