@@ -73,6 +73,9 @@ public class RecipeService {
         // Fetch the ingredients for this recipe
         List<Ingredient> ingredients = ingredientRepository.findByRecipeId(id);
 
+        // Log the ingredients to verify they are being fetched correctly
+        System.out.println("Ingredients: " + ingredients);
+
         // Update recipe price based on the ingredients and their products
         updateRecipePrice(recipe, ingredients);
 
@@ -81,8 +84,14 @@ public class RecipeService {
                     .map(Ingredient::getEan)
                     .collect(Collectors.toList());
 
+            // Log the EANs that are being passed to getProductsByEANs
+            System.out.println("EANs passed to getProductsByEANs: " + eanList);
+
             // Fetch product info based on EANs
             List<Map<String, Object>> productInfo = productDataService.getProductsByEANs(eanList);
+
+            // Log the fetched product info
+            System.out.println("Fetched product info: " + productInfo);
 
             // Return recipe with product info
             return new RecipeWithProductInfo(recipe, productInfo);
@@ -91,6 +100,7 @@ public class RecipeService {
         // Return just the recipe without product info
         return new RecipeWithProductInfo(recipe, null);
     }
+
 
     @Transactional
     public Page<Recipe> getUserRecipes(String userId, Pageable pageable) {

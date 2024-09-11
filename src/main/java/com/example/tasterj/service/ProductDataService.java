@@ -26,9 +26,16 @@ public class ProductDataService {
     public List<Map<String, Object>> getProductsByEANs(List<String> eanList) {
         List<Map<String, Object>> allProducts = getProducts();
         return allProducts.stream()
-                .filter(product -> eanList.contains(product.get("ean")))
+                .filter(product -> {
+                    String productEan = (String) product.get("ean");
+
+                    return productEan != null && eanList.contains(productEan);
+                })
                 .collect(Collectors.toList());
+
     }
+
+
 
     public Map<String, List<String>> getBrands() {
         return loadJson("classpath:brands.json");
