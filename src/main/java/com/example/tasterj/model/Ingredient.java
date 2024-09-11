@@ -24,8 +24,6 @@ public class Ingredient {
     @JsonIgnore
     private Recipe recipe;
 
-
-
     @Column(nullable = false, length = 255)
     private String name;
 

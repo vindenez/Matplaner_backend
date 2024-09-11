@@ -236,13 +236,11 @@ public class RecipeService {
         recipeRepository.delete(recipe);
     }
 
-
     public Page<SavedRecipe> getSavedRecipesForUser(String userId, Pageable pageable) {
         User user = userRepository.findBySupabaseUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return savedRecipeRepository.findByUser(user, pageable);
     }
-
 
     public boolean saveRecipeForUser(String userId, String recipeId) {
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));

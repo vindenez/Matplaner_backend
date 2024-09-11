@@ -93,9 +93,6 @@ public class ProductSearchService {
         return response;
     }
 
-
-
-
     private boolean productMatchesName(Map<String, Object> product, List<String> substrings) {
         String name = Objects.requireNonNullElse((String) product.get("name"), "").toLowerCase();
         return substrings.stream().allMatch(substring -> name.contains(substring));
@@ -134,4 +131,5 @@ public class ProductSearchService {
         // Step 4: Return true if both conditions are satisfied
         return !nonNameSubstrings.isEmpty() && nameMatches;
     }
+
 }

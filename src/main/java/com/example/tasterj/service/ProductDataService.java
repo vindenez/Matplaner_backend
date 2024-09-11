@@ -36,7 +36,6 @@ public class ProductDataService {
                 .collect(Collectors.toList());
     }
 
-
     public Map<String, List<String>> getBrands() {
         return loadJson("classpath:brands.json");
     }

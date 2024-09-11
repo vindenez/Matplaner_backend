@@ -63,7 +63,6 @@ public class ImageService {
         }
     }
 
-
     public void deleteImage(String imageUrl) {
         try {
             String filename = extractFilenameFromUrl(imageUrl);
