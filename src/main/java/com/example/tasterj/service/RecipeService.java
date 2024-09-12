@@ -50,9 +50,6 @@ public class RecipeService {
     @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
-    private ProductDataService productDataService;
-
     public Page<Recipe> getRecipes(Pageable pageable) {
         return recipeRepository.findAll(pageable);
     }
