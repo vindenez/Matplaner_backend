@@ -1,12 +1,6 @@
 package com.example.tasterj.service;
 
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoException;
-import com.mongodb.ServerApi;
-import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.example.tasterj.model.Product;
@@ -36,27 +30,28 @@ public class ProductDataService {
     @Value("${kassalapp.api}")
     private String API_KEY;
 
+    @Value("${fetch.on.startup}")
+    private boolean fetchOnStartup;
+
     private static final String PRODUCT_URL = "https://kassal.app/api/v1/products";
-    private static final int PAGE_LIMIT = 1000;
     private static final int RATE_LIMIT = 60;
     private static final int BATCH_SIZE = 1000;
 
     private final String databaseName = "products";
     private final String collectionName = "products_collection";
 
-    // On startup, fetch and save products
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationStartup() {
-        fetchAndSaveProducts();
+        if (fetchOnStartup) {
+            fetchAndSaveProducts();
+        }
     }
 
-    // Scheduled to run every day at 7 AM
     @Scheduled(cron = "0 0 7 * * ?")
     public void scheduledFetchAndSaveProducts() {
         fetchAndSaveProducts();
     }
 
-    // Fetch products and save to MongoDB
     public void fetchAndSaveProducts() {
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -66,16 +61,24 @@ public class ProductDataService {
 
             List<Product> allProducts = new ArrayList<>();
             int currentPage = 1;
+            boolean hasMoreProducts = true;
 
-            while (currentPage <= PAGE_LIMIT) {
-                for (int i = 0; i < RATE_LIMIT && currentPage <= PAGE_LIMIT; i++, currentPage++) {
-                    String productUrl = PRODUCT_URL + "?page=" + currentPage;
+            while (hasMoreProducts) {
+                for (int i = 0; i < RATE_LIMIT && hasMoreProducts; i++, currentPage++) {
+                    String productUrl = PRODUCT_URL + "?page=" + currentPage + "&size=100";
                     ResponseEntity<String> response = restTemplate.exchange(productUrl, HttpMethod.GET, entity, String.class);
 
                     if (response.getStatusCode() == HttpStatus.OK) {
                         String productsJson = response.getBody();
                         List<Product> products = parseProducts(productsJson);
-                        allProducts.addAll(products);
+
+                        if (!products.isEmpty()) {
+                            allProducts.addAll(products);
+                        }
+
+                        if (products.size() < 100) {
+                            hasMoreProducts = false;
+                        }
 
                         if (allProducts.size() >= BATCH_SIZE) {
                             saveProductsToMongoDB(allProducts);
@@ -83,10 +86,11 @@ public class ProductDataService {
                         }
                     } else {
                         System.err.println("Failed to fetch page " + currentPage + ": " + response.getStatusCode());
+                        hasMoreProducts = false;
                     }
                 }
 
-                if (currentPage <= PAGE_LIMIT) {
+                if (hasMoreProducts) {
                     System.out.println("Pausing for 1 minute to respect rate limits...");
                     TimeUnit.MINUTES.sleep(1);
                 }
@@ -97,7 +101,6 @@ public class ProductDataService {
             }
 
             System.out.println("All products fetched and saved to MongoDB.");
-
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error fetching or saving products: " + e.getMessage());
@@ -107,8 +110,16 @@ public class ProductDataService {
     private void saveProductsToMongoDB(List<Product> products) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Product> collection = database.getCollection(collectionName, Product.class);
-        collection.insertMany(products);
-        System.out.println(products.size() + " products saved to MongoDB.");
+
+        for (Product product : products) {
+            collection.replaceOne(
+                    new Document("ean", product.getEan()).append("store.code", product.getStore().getCode()),
+                    product,
+                    new com.mongodb.client.model.ReplaceOptions().upsert(true)
+            );
+        }
+
+        System.out.println(products.size() + " products saved/updated to MongoDB.");
     }
 
     private List<Product> parseProducts(String productsJson) {
