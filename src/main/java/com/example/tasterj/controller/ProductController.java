@@ -3,7 +3,6 @@ package com.example.tasterj.controller;
 
 import com.example.tasterj.model.Product;
 import com.example.tasterj.service.ProductDataService;
-import com.example.tasterj.service.ProductMatchService;
 import com.example.tasterj.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

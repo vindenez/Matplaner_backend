@@ -1,7 +1,10 @@
 package com.example.tasterj.service;
 
 import com.example.tasterj.model.Product;
-import com.example.tasterj.repository.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -10,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,8 +22,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ProductDataService {
 
-    @Value("${spring.data.mongodb.uri}")
-    private String mongoUri;
+    @Autowired
+    private MongoClient mongoClient;
+
+    @Value("${mongodb.database}")
+    private String databaseName;
+
+    @Value("${mongodb.collection}")
+    private String collectionName;
 
     @Value("${kassalapp.url}")
     private String API_KEY;
@@ -31,9 +39,7 @@ public class ProductDataService {
     private static final int RATE_LIMIT = 60;
     private static final int BATCH_SIZE = 1000;
 
-    @Autowired
-    private ProductRepository productRepository;
-
+    // On startup, fetch and save products
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationStartup() {
         fetchAndSaveProducts();
@@ -45,7 +51,7 @@ public class ProductDataService {
         fetchAndSaveProducts();
     }
 
-    // Method that fetches and saves products from the API
+    // Fetch products and save to MongoDB
     public void fetchAndSaveProducts() {
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -95,8 +101,15 @@ public class ProductDataService {
 
     // Method to save products to MongoDB
     private void saveProductsToMongoDB(List<Product> products) {
-        productRepository.saveAll(products);
+        MongoCollection<Product> collection = getProductCollection();
+        collection.insertMany(products);  // Directly insert the Product objects
         System.out.println(products.size() + " products saved to MongoDB.");
+    }
+
+    // Method to get MongoDB collection
+    private MongoCollection<Product> getProductCollection() {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        return database.getCollection(collectionName, Product.class);
     }
 
     // Method to parse product JSON to a list of Product objects

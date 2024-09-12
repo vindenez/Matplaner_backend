@@ -2,17 +2,15 @@ package com.example.tasterj.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "products_collection")
 public class Product {
 
-    @Id
+    private String id;
     private String ean;
     private String name;
     private String brand;
@@ -44,4 +42,3 @@ public class Product {
         private String logo;
     }
 }
-
