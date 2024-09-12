@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "products")
+@Document(collection = "products_collection")
 public class Product {
 
     @Id
