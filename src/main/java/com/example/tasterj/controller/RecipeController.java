@@ -32,9 +32,6 @@ public class RecipeController {
     private RecipeService recipeService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ImageService imageService;
 
 
