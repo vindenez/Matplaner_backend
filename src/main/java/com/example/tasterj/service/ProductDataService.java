@@ -1,6 +1,7 @@
 package com.example.tasterj.service;
 
 import com.example.tasterj.model.Product;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -13,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,14 +114,23 @@ public class ProductDataService {
         return database.getCollection(collectionName, Product.class);
     }
 
-    // Method to parse product JSON to a list of Product objects
     private List<Product> parseProducts(String productsJson) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return Arrays.asList(objectMapper.readValue(productsJson, Product[].class));
+            // Parse the JSON into a tree structure
+            JsonNode root = objectMapper.readTree(productsJson);
+            JsonNode dataNode = root.get("data");
+
+            if (dataNode != null && dataNode.isArray()) {
+                return objectMapper.convertValue(dataNode, new TypeReference<List<Product>>() {});
+            } else {
+                System.err.println("No 'data' field found or it's not an array.");
+                return new ArrayList<>();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
     }
+
 }
