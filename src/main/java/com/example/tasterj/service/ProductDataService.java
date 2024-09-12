@@ -40,6 +40,7 @@ public class ProductDataService {
     private final String databaseName = "products";
     private final String collectionName = "products_collection";
 
+    // On startup, fetch and save products if fetchOnStartup is true
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationStartup() {
         if (fetchOnStartup) {
@@ -47,11 +48,13 @@ public class ProductDataService {
         }
     }
 
+    // Scheduled to run every day at 7 AM
     @Scheduled(cron = "0 0 7 * * ?")
     public void scheduledFetchAndSaveProducts() {
         fetchAndSaveProducts();
     }
 
+    // Fetch products and save to MongoDB
     public void fetchAndSaveProducts() {
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -76,6 +79,7 @@ public class ProductDataService {
                             allProducts.addAll(products);
                         }
 
+                        // If fewer than 100 products were fetched, assume no more products
                         if (products.size() < 100) {
                             hasMoreProducts = false;
                         }
@@ -107,21 +111,34 @@ public class ProductDataService {
         }
     }
 
+    // Save or update products in MongoDB
     private void saveProductsToMongoDB(List<Product> products) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         MongoCollection<Product> collection = database.getCollection(collectionName, Product.class);
 
         for (Product product : products) {
-            collection.replaceOne(
-                    new Document("ean", product.getEan()).append("store.code", product.getStore().getCode()),
-                    product,
-                    new com.mongodb.client.model.ReplaceOptions().upsert(true)
-            );
+            Document filter = new Document("ean", product.getEan()).append("store.code", product.getStore().getCode());
+
+            Document update = new Document("$set", new Document("name", product.getName())
+                    .append("brand", product.getBrand())
+                    .append("vendor", product.getVendor())
+                    .append("url", product.getUrl())
+                    .append("image", product.getImage())
+                    .append("category", product.getCategory())
+                    .append("description", product.getDescription())
+                    .append("currentPrice", product.getCurrentPrice())
+                    .append("currentUnitPrice", product.getCurrentUnitPrice())
+                    .append("weight", product.getWeight())
+                    .append("weightUnit", product.getWeightUnit())
+                    .append("store", product.getStore()));
+
+            collection.updateOne(filter, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         }
 
-        System.out.println(products.size() + " products saved/updated to MongoDB.");
+        System.out.println(products.size() + " products saved/updated in MongoDB.");
     }
 
+    // Parse products from the API response
     private List<Product> parseProducts(String productsJson) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
