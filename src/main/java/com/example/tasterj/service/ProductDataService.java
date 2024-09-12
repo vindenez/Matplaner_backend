@@ -1,16 +1,18 @@
 package com.example.tasterj.service;
 
-import com.example.tasterj.model.Product;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
+import com.example.tasterj.model.Product;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.*;
@@ -20,21 +22,18 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
 @Service
 public class ProductDataService {
 
-    private MongoClient mongoClient;
-
     @Value("${kassalapp.api}")
     private String API_KEY;
+
+    @Value("${mongodb.uri}")
+    private String mongoUri;
 
     private static final String PRODUCT_URL = "https://kassal.app/api/v1/products";
     private static final int PAGE_LIMIT = 1000;
@@ -43,20 +42,6 @@ public class ProductDataService {
 
     private final String databaseName = "products";
     private final String collectionName = "products_collection";
-
-    @PostConstruct
-    public void init() {
-        CodecRegistry pojoCodecRegistry = fromRegistries(
-                MongoClientSettings.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build())
-        );
-
-        mongoClient = MongoClients.create(
-                MongoClientSettings.builder()
-                        .codecRegistry(pojoCodecRegistry)
-                        .build()
-        );
-    }
 
     // On startup, fetch and save products
     @EventListener(ApplicationReadyEvent.class)
@@ -68,6 +53,20 @@ public class ProductDataService {
     @Scheduled(cron = "0 0 7 * * ?")
     public void scheduledFetchAndSaveProducts() {
         fetchAndSaveProducts();
+    }
+
+    // Create a MongoDB client connected to Atlas
+    private MongoClient createMongoClient() {
+        ServerApi serverApi = ServerApi.builder()
+                .version(ServerApiVersion.V1)
+                .build();
+
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString(mongoUri))
+                .serverApi(serverApi)
+                .build();
+
+        return MongoClients.create(settings);
     }
 
     // Fetch products and save to MongoDB
@@ -120,17 +119,18 @@ public class ProductDataService {
 
     // Method to save products to MongoDB
     private void saveProductsToMongoDB(List<Product> products) {
-        MongoCollection<Product> collection = getProductCollection();
-        collection.insertMany(products);  // Directly insert the Product objects
-        System.out.println(products.size() + " products saved to MongoDB.");
+        try (MongoClient mongoClient = createMongoClient()) {
+            MongoDatabase database = mongoClient.getDatabase(databaseName);
+            MongoCollection<Product> collection = database.getCollection(collectionName, Product.class);
+            collection.insertMany(products);  // Directly insert the Product objects
+            System.out.println(products.size() + " products saved to MongoDB.");
+        } catch (MongoException e) {
+            e.printStackTrace();
+            System.err.println("Error inserting products into MongoDB: " + e.getMessage());
+        }
     }
 
-    // Method to get MongoDB collection
-    private MongoCollection<Product> getProductCollection() {
-        MongoDatabase database = mongoClient.getDatabase(databaseName);
-        return database.getCollection(collectionName, Product.class);
-    }
-
+    // Parse product data from the response JSON
     private List<Product> parseProducts(String productsJson) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
