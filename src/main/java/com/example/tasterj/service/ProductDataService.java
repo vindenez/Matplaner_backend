@@ -25,12 +25,6 @@ public class ProductDataService {
     @Autowired
     private MongoClient mongoClient;
 
-    @Value("${mongodb.database}")
-    private String databaseName;
-
-    @Value("${mongodb.collection}")
-    private String collectionName;
-
     @Value("${kassalapp.url}")
     private String API_KEY;
 
@@ -38,6 +32,12 @@ public class ProductDataService {
     private static final int PAGE_LIMIT = 1000;
     private static final int RATE_LIMIT = 60;
     private static final int BATCH_SIZE = 1000;
+
+    private final String databaseName = "products";
+
+    private final String collectionName = "products_collection";
+
+
 
     // On startup, fetch and save products
     @EventListener(ApplicationReadyEvent.class)
