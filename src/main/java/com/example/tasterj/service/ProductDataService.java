@@ -3,10 +3,14 @@ package com.example.tasterj.service;
 import com.example.tasterj.model.Product;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.*;
@@ -16,15 +20,17 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 @Service
 public class ProductDataService {
 
-    @Autowired
     private MongoClient mongoClient;
 
     @Value("${kassalapp.api}")
@@ -36,10 +42,21 @@ public class ProductDataService {
     private static final int BATCH_SIZE = 1000;
 
     private final String databaseName = "products";
-
     private final String collectionName = "products_collection";
 
+    @PostConstruct
+    public void init() {
+        CodecRegistry pojoCodecRegistry = fromRegistries(
+                MongoClientSettings.getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        );
 
+        mongoClient = MongoClients.create(
+                MongoClientSettings.builder()
+                        .codecRegistry(pojoCodecRegistry)
+                        .build()
+        );
+    }
 
     // On startup, fetch and save products
     @EventListener(ApplicationReadyEvent.class)
@@ -132,5 +149,4 @@ public class ProductDataService {
             return new ArrayList<>();
         }
     }
-
 }
