@@ -27,6 +27,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
 
     @Query("SELECT r FROM Recipe r WHERE r.storedPrice BETWEEN :minPrice AND :maxPrice")
     Page<Recipe> findAllWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
+
 }
 
 
