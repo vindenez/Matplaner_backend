@@ -25,7 +25,7 @@ public class ProductDataService {
     @Autowired
     private MongoClient mongoClient;
 
-    @Value("${kassalapp.url}")
+    @Value("${kassalapp.api}")
     private String API_KEY;
 
     private static final String PRODUCT_URL = "https://kassal.app/api/v1/products";
