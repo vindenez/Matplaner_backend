@@ -35,7 +35,6 @@ public class ProductDataService {
 
     private static final String PRODUCT_URL = "https://kassal.app/api/v1/products";
     private static final int RATE_LIMIT = 60;
-    private static final int BATCH_SIZE = 1000;
 
     private final String databaseName = "products";
     private final String collectionName = "products_collection";
@@ -62,11 +61,13 @@ public class ProductDataService {
             headers.set("Authorization", "Bearer " + API_KEY);
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            List<Product> allProducts = new ArrayList<>();
-            int currentPage = 1;
             boolean hasMoreProducts = true;
+            int currentPage = 1;
 
             while (hasMoreProducts) {
+                List<Product> allProducts = new ArrayList<>();
+
+                // Fetch products from all 60 pages before saving/updating to MongoDB
                 for (int i = 0; i < RATE_LIMIT && hasMoreProducts; i++, currentPage++) {
                     String productUrl = PRODUCT_URL + "?page=" + currentPage + "&size=100";
                     ResponseEntity<String> response = restTemplate.exchange(productUrl, HttpMethod.GET, entity, String.class);
@@ -79,14 +80,9 @@ public class ProductDataService {
                             allProducts.addAll(products);
                         }
 
-                        // If fewer than 100 products were fetched, assume no more products
+                        // If fewer than 100 products are fetched, assume no more products
                         if (products.size() < 100) {
                             hasMoreProducts = false;
-                        }
-
-                        if (allProducts.size() >= BATCH_SIZE) {
-                            saveProductsToMongoDB(allProducts);
-                            allProducts.clear();
                         }
                     } else {
                         System.err.println("Failed to fetch page " + currentPage + ": " + response.getStatusCode());
@@ -94,14 +90,16 @@ public class ProductDataService {
                     }
                 }
 
+                // Save/Update all products for the current batch
+                if (!allProducts.isEmpty()) {
+                    saveProductsToMongoDB(allProducts);
+                }
+
+                // If there are more products, pause for 1 minute to respect rate limits
                 if (hasMoreProducts) {
                     System.out.println("Pausing for 1 minute to respect rate limits...");
                     TimeUnit.MINUTES.sleep(1);
                 }
-            }
-
-            if (!allProducts.isEmpty()) {
-                saveProductsToMongoDB(allProducts);
             }
 
             System.out.println("All products fetched and saved to MongoDB.");
@@ -132,6 +130,7 @@ public class ProductDataService {
                     .append("weightUnit", product.getWeightUnit())
                     .append("store", product.getStore()));
 
+            // Use upsert to either update or insert new product
             collection.updateOne(filter, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         }
 
