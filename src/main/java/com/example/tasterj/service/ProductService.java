@@ -1,6 +1,9 @@
 package com.example.tasterj.service;
 
+import com.example.tasterj.dto.CreateRecipeDto;
+import com.example.tasterj.model.Ingredient;
 import com.example.tasterj.model.Product;
+import com.example.tasterj.model.Recipe;
 import com.example.tasterj.repository.ProductRepository;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -11,6 +14,8 @@ import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,16 +33,6 @@ public class ProductService {
         this.collection = mongoClient.getDatabase("products").getCollection("products_collection");  // Initialize the collection
     }
 
-    private List<String> generateSubstrings(String query) {
-        String[] words = query.toLowerCase().split("\\s+");
-        List<String> substrings = new ArrayList<>();
-        for (int i = 0; i < words.length; i++) {
-            for (int j = i; j < words.length; j++) {
-                substrings.add(String.join(" ", Arrays.copyOfRange(words, i, j + 1)));
-            }
-        }
-        return substrings;
-    }
 
     public Map<String, Object> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
         // Step 1: Create MongoDB filters
@@ -105,6 +100,14 @@ public class ProductService {
         }
 
         return result;
+    }
+
+    public List<Product> fetchProductsForIngredients(List<Ingredient> ingredients) {
+        return ingredients.stream()
+                .map(ingredient -> productRepository.findByEanAndStoreCode(ingredient.getEan(), ingredient.getStoreCode()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     private Map<String, Object> convertProductToMap(Product product) {

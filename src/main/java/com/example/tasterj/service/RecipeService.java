@@ -50,6 +50,9 @@ public class RecipeService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ProductService productService;
+
     public Page<Recipe> getRecipes(Pageable pageable) {
         return recipeRepository.findAll(pageable);
     }
@@ -76,7 +79,7 @@ public class RecipeService {
         updateRecipePrice(recipe, ingredients);
 
         if (includeProductInfo) {
-            List<Product> products = fetchProductsFromMongoDB(ingredients);
+            List<Product> products = productService.fetchProductsForIngredients(ingredients);
 
             List<Map<String, Object>> productInfo = products.stream()
                     .map(product -> objectMapper.convertValue(product, new TypeReference<Map<String, Object>>() {}))
@@ -175,7 +178,6 @@ public class RecipeService {
             recipe.setTags(updateRecipeDto.getTags());
         }
 
-        // Update ingredients and fetch product prices from MongoDB
         if (updateRecipeDto.getIngredients() != null) {
             ingredientRepository.deleteByRecipeId(recipe.getId());
 
@@ -335,7 +337,7 @@ public class RecipeService {
     }
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
-        List<Product> products = fetchProductsFromMongoDB(ingredients);
+        List<Product> products = productService.fetchProductsForIngredients(ingredients);
         double currentPrice = calculateCurrentPrice(products);
 
         recipe.setCurrentPrice(roundToTwoDecimalPlaces(currentPrice));
@@ -346,6 +348,11 @@ public class RecipeService {
 
         recipe.setPriceLastUpdated(LocalDateTime.now());
         recipeRepository.save(recipe);
+    }
+
+    private double roundToTwoDecimalPlaces(double value) {
+        BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
+        return roundedValue.doubleValue();
     }
 
     private double calculateCurrentPrice(List<Product> products) {
@@ -361,24 +368,5 @@ public class RecipeService {
         return currentPrice.doubleValue();
     }
 
-    private double roundToTwoDecimalPlaces(double value) {
-        BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
-        return roundedValue.doubleValue();
-    }
-
-    private Map<String, Object> findProductByEan(List<Map<String, Object>> products, String ean) {
-        return products.stream()
-                .filter(product -> ean.equals(product.get("ean")))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private List<Product> fetchProductsFromMongoDB(List<Ingredient> ingredients) {
-        return ingredients.stream()
-                .map(ingredient -> productRepository.findByEanAndStoreCode(ingredient.getEan(), ingredient.getStoreCode()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-    }
 
 }
