@@ -1,9 +1,10 @@
 package com.example.tasterj.controller;
 
 
+import com.example.tasterj.model.Product;
 import com.example.tasterj.service.ProductDataService;
 import com.example.tasterj.service.ProductMatchService;
-import com.example.tasterj.service.ProductSearchService;
+import com.example.tasterj.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,17 +20,14 @@ public class ProductController {
     private static final int QUERY_CHAR_LIMIT = 50;
 
     @Autowired
-    private ProductMatchService productMatchService;
-
-    @Autowired
-    private ProductSearchService productSearchService;
+    private ProductService productService;
 
     @Autowired
     private ProductDataService productDataService;
 
     @PostMapping("/match")
-    public Map<String, List<Map<String, Object>>> getMatchedProducts(@RequestBody List<Map<String, String>> ingredients) {
-        return productMatchService.findMatches(ingredients);
+    public Map<String, List<Product>> getMatchedProducts(@RequestBody List<Map<String, String>> ingredients) {
+        return productService.findMatches(ingredients);
     }
 
     @GetMapping("/search")
@@ -44,7 +42,7 @@ public class ProductController {
                     .body("Search query exceeds character limit of " + QUERY_CHAR_LIMIT + " characters.");
         }
 
-        Map<String, Object> searchResult = productSearchService.searchProducts(query, selectedStores, page, pageSize);
+        Map<String, Object> searchResult = productService.searchProducts(query, selectedStores, page, pageSize);
 
         if (((List<?>) searchResult.get("products")).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No products found for the given query.");

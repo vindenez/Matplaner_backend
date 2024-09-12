@@ -6,9 +6,9 @@ import com.example.tasterj.dto.UpdateRecipeDto;
 import com.example.tasterj.exception.ResourceNotFoundException;
 import com.example.tasterj.model.*;
 
-import com.example.tasterj.repository.RecipeRepository;
-import com.example.tasterj.repository.IngredientRepository;
-import com.example.tasterj.repository.UserRepository;
+import com.example.tasterj.repository.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import com.example.tasterj.repository.SavedRecipeRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,6 +33,9 @@ import java.util.stream.Collectors;
 public class RecipeService {
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private SavedRecipeRepository savedRecipeRepository;
 
     @Autowired
@@ -44,6 +46,9 @@ public class RecipeService {
 
     @Autowired
     private IngredientRepository ingredientRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private ProductDataService productDataService;
@@ -74,7 +79,12 @@ public class RecipeService {
         updateRecipePrice(recipe, ingredients);
 
         if (includeProductInfo) {
-            List<Map<String, Object>> productInfo = productDataService.getProductsByEANsAndStoreCodes(ingredients);
+            List<Product> products = fetchProductsFromMongoDB(ingredients);
+
+            List<Map<String, Object>> productInfo = products.stream()
+                    .map(product -> objectMapper.convertValue(product, new TypeReference<Map<String, Object>>() {}))
+                    .collect(Collectors.toList());
+
             return new RecipeWithProductInfo(recipe, productInfo);
         }
 
@@ -102,7 +112,6 @@ public class RecipeService {
         recipe.setInstructions(createRecipeDto.getInstructions());
         recipe.setTags(createRecipeDto.getTags());
 
-        List<Map<String, Object>> products = productDataService.getProducts();
         final double[] totalCurrentPrice = {0.0};
 
         List<Ingredient> ingredients = createRecipeDto.getIngredients().stream().map(dto -> {
@@ -116,9 +125,10 @@ public class RecipeService {
             ingredient.setStoreCode(dto.getStoreCode());
             ingredient.setImage(dto.getImage());
 
-            Map<String, Object> product = findProductByEan(products, dto.getEan());
-            if (product != null) {
-                Double productPrice = (Double) product.get("current_price");
+            Optional<Product> productOpt = productRepository.findByEanAndStoreCode(dto.getEan(), dto.getStoreCode());
+            if (productOpt.isPresent()) {
+                Product product = productOpt.get();
+                Double productPrice = product.getCurrentPrice();
                 if (productPrice != null) {
                     totalCurrentPrice[0] += productPrice;
                 }
@@ -168,9 +178,10 @@ public class RecipeService {
             recipe.setTags(updateRecipeDto.getTags());
         }
 
+        // Update ingredients and fetch product prices from MongoDB
         if (updateRecipeDto.getIngredients() != null) {
             ingredientRepository.deleteByRecipeId(recipe.getId());
-            List<Map<String, Object>> products = productDataService.getProducts();
+
             final double[] totalCurrentPrice = {0.0};
 
             List<Ingredient> updatedIngredients = updateRecipeDto.getIngredients().stream().map(dto -> {
@@ -184,9 +195,10 @@ public class RecipeService {
                 ingredient.setStoreCode(dto.getStoreCode());
                 ingredient.setImage(dto.getImage());
 
-                Map<String, Object> product = findProductByEan(products, dto.getEan());
-                if (product != null) {
-                    Double productPrice = (Double) product.get("current_price");
+                Optional<Product> productOpt = productRepository.findByEanAndStoreCode(dto.getEan(), dto.getStoreCode());
+                if (productOpt.isPresent()) {
+                    Product product = productOpt.get();
+                    Double productPrice = product.getCurrentPrice();
                     if (productPrice != null) {
                         totalCurrentPrice[0] += productPrice;
                     }
@@ -211,6 +223,7 @@ public class RecipeService {
 
         return recipeRepository.save(recipe);
     }
+
 
     @Transactional
     public void deleteRecipe(String id) {
@@ -325,7 +338,7 @@ public class RecipeService {
     }
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
-        List<Map<String, Object>> products = productDataService.getProductsByEANsAndStoreCodes(ingredients);
+        List<Product> products = fetchProductsFromMongoDB(ingredients);
         double currentPrice = calculateCurrentPrice(products);
 
         recipe.setCurrentPrice(roundToTwoDecimalPlaces(currentPrice));
@@ -338,11 +351,11 @@ public class RecipeService {
         recipeRepository.save(recipe);
     }
 
-    private double calculateCurrentPrice(List<Map<String, Object>> products) {
+    private double calculateCurrentPrice(List<Product> products) {
         BigDecimal currentPrice = BigDecimal.ZERO;
 
-        for (Map<String, Object> product : products) {
-            Double productPrice = (Double) product.get("current_price");
+        for (Product product : products) {
+            Double productPrice = product.getCurrentPrice();
             if (productPrice != null) {
                 currentPrice = currentPrice.add(BigDecimal.valueOf(productPrice));
             }
@@ -361,6 +374,14 @@ public class RecipeService {
                 .filter(product -> ean.equals(product.get("ean")))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private List<Product> fetchProductsFromMongoDB(List<Ingredient> ingredients) {
+        return ingredients.stream()
+                .map(ingredient -> productRepository.findByEanAndStoreCode(ingredient.getEan(), ingredient.getStoreCode()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
 }
