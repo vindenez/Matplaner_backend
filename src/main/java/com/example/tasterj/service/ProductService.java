@@ -89,6 +89,24 @@ public class ProductService {
         return response;
     }
 
+    public Map<String, List<Map<String, Object>>> findMatches(List<Map<String, String>> ingredients) {
+        Map<String, List<Map<String, Object>>> result = new HashMap<>();
+
+        for (Map<String, String> ingredient : ingredients) {
+            String ingredientName = ingredient.get("ingredient");
+
+            List<Product> matchedProducts = productRepository.findByNameContaining(ingredientName);
+
+            List<Map<String, Object>> productMaps = matchedProducts.stream()
+                    .map(this::convertProductToMap)
+                    .collect(Collectors.toList());
+
+            result.put(ingredientName, productMaps);
+        }
+
+        return result;
+    }
+
     private Map<String, Object> convertProductToMap(Product product) {
         Map<String, Object> productMap = new HashMap<>();
         productMap.put("ean", product.getEan());

@@ -3,7 +3,9 @@ package com.example.tasterj.repository;
 import com.example.tasterj.model.Product;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -54,6 +56,7 @@ public class ProductRepository {
         Document document = collection.find(and(eq("ean", ean), eq("storeCode", storeCode))).first();
         return Optional.ofNullable(document).map(this::documentToProduct);
     }
+
 
     // Utility: Convert a MongoDB Document to a Product object
     public Product documentToProduct(Document document) {
