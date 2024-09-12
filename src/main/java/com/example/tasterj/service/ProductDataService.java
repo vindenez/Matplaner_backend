@@ -13,6 +13,7 @@ import com.example.tasterj.model.Product;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.*;
@@ -29,11 +30,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ProductDataService {
 
+    @Autowired
+    private MongoClient mongoClient;
+
     @Value("${kassalapp.api}")
     private String API_KEY;
-
-    @Value("${mongodb.uri}")
-    private String mongoUri;
 
     private static final String PRODUCT_URL = "https://kassal.app/api/v1/products";
     private static final int PAGE_LIMIT = 1000;
@@ -53,20 +54,6 @@ public class ProductDataService {
     @Scheduled(cron = "0 0 7 * * ?")
     public void scheduledFetchAndSaveProducts() {
         fetchAndSaveProducts();
-    }
-
-    // Create a MongoDB client connected to Atlas
-    private MongoClient createMongoClient() {
-        ServerApi serverApi = ServerApi.builder()
-                .version(ServerApiVersion.V1)
-                .build();
-
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(mongoUri))
-                .serverApi(serverApi)
-                .build();
-
-        return MongoClients.create(settings);
     }
 
     // Fetch products and save to MongoDB
@@ -117,24 +104,16 @@ public class ProductDataService {
         }
     }
 
-    // Method to save products to MongoDB
     private void saveProductsToMongoDB(List<Product> products) {
-        try (MongoClient mongoClient = createMongoClient()) {
-            MongoDatabase database = mongoClient.getDatabase(databaseName);
-            MongoCollection<Product> collection = database.getCollection(collectionName, Product.class);
-            collection.insertMany(products);  // Directly insert the Product objects
-            System.out.println(products.size() + " products saved to MongoDB.");
-        } catch (MongoException e) {
-            e.printStackTrace();
-            System.err.println("Error inserting products into MongoDB: " + e.getMessage());
-        }
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Product> collection = database.getCollection(collectionName, Product.class);
+        collection.insertMany(products);
+        System.out.println(products.size() + " products saved to MongoDB.");
     }
 
-    // Parse product data from the response JSON
     private List<Product> parseProducts(String productsJson) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            // Parse the JSON into a tree structure
             JsonNode root = objectMapper.readTree(productsJson);
             JsonNode dataNode = root.get("data");
 
