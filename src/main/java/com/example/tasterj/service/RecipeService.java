@@ -252,6 +252,7 @@ public class RecipeService {
         recipeRepository.delete(recipe);
     }
 
+    @Transactional
     public Page<SavedRecipe> getSavedRecipesForUser(Pageable pageable) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken)) {
@@ -265,6 +266,7 @@ public class RecipeService {
         return savedRecipeRepository.findByUser(user, pageable);
     }
 
+    @Transactional
     public boolean saveRecipeForUser(String recipeId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken)) {
@@ -272,7 +274,7 @@ public class RecipeService {
         }
         String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
 
-        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+        Optional<User> userOpt = userRepository.findBySupabaseUserId(userId);
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
         if (userOpt.isPresent() && recipeOpt.isPresent()) {
@@ -291,6 +293,7 @@ public class RecipeService {
         return false;
     }
 
+    @Transactional
     public boolean removeSavedRecipeForUser(String recipeId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken)) {
@@ -299,7 +302,7 @@ public class RecipeService {
 
         String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
 
-        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+        Optional<User> userOpt = userRepository.findBySupabaseUserId(userId);
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
         if (userOpt.isPresent() && recipeOpt.isPresent()) {
@@ -316,6 +319,7 @@ public class RecipeService {
         return false;
     }
 
+    @Transactional
     public boolean isRecipeSavedByUser(String recipeId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken)) {
@@ -324,7 +328,7 @@ public class RecipeService {
 
         String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
 
-        Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+        Optional<User> userOpt = userRepository.findBySupabaseUserId(userId);
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
         if (userOpt.isPresent() && recipeOpt.isPresent()) {
