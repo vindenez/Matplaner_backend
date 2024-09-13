@@ -79,23 +79,29 @@ public class ProductService {
         }
 
         // Step 5: Remove brand words from query words
-        List<String> nameWords = new ArrayList<>(Arrays.asList(words));
+        List<String> remainingWords = new ArrayList<>(Arrays.asList(words));
         if (matchingBrand != null) {
             String[] brandWords = matchingBrand.toLowerCase().split("\\s+");
             for (String word : brandWords) {
-                nameWords.remove(word);
+                remainingWords.remove(word);
             }
         }
 
-        // Step 6: Create filters for product name
-        List<Bson> nameFilters = nameWords.stream()
-                .map(word -> Filters.regex("name", Pattern.compile(Pattern.quote(word), Pattern.CASE_INSENSITIVE)))
-                .collect(Collectors.toList());
+        // Step 6: Create filters that check both product names and categories
+        List<Bson> wordFilters = new ArrayList<>();
+
+        for (String word : remainingWords) {
+            List<Bson> orFilters = new ArrayList<>();
+            orFilters.add(Filters.regex("name", Pattern.compile(Pattern.quote(word), Pattern.CASE_INSENSITIVE)));
+            orFilters.add(Filters.regex("category.name", Pattern.compile(Pattern.quote(word), Pattern.CASE_INSENSITIVE)));
+            wordFilters.add(Filters.or(orFilters));
+        }
 
         // Step 7: Combine filters
         List<Bson> filters = new ArrayList<>();
-        if (!nameFilters.isEmpty()) {
-            filters.add(Filters.and(nameFilters));
+
+        if (!wordFilters.isEmpty()) {
+            filters.add(Filters.and(wordFilters));
         }
 
         if (matchingBrand != null) {
@@ -141,6 +147,7 @@ public class ProductService {
 
         return response;
     }
+
 
     private List<String> generateSubstrings(String[] words) {
         List<String> substrings = new ArrayList<>();
