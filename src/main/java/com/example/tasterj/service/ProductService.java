@@ -30,7 +30,7 @@ public class ProductService {
     @Autowired
     public ProductService(ProductRepository productRepository, MongoClient mongoClient) {
         this.productRepository = productRepository;
-        this.collection = mongoClient.getDatabase("products").getCollection("products_collection");  // Initialize the collection
+        this.collection = mongoClient.getDatabase("products").getCollection("products_collection");
     }
 
 

@@ -45,7 +45,7 @@ public class ProductRepository {
     // Find all products from a specific store by store code
     public List<Product> findByStoreCode(String storeCode) {
         List<Product> products = new ArrayList<>();
-        for (Document document : collection.find(eq("storeCode", storeCode))) {
+        for (Document document : collection.find(eq("store.code", storeCode))) {
             products.add(documentToProduct(document));
         }
         return products;
@@ -53,7 +53,7 @@ public class ProductRepository {
 
     // Find a product by EAN and store code
     public Optional<Product> findByEanAndStoreCode(String ean, String storeCode) {
-        Document document = collection.find(and(eq("ean", ean), eq("storeCode", storeCode))).first();
+        Document document = collection.find(and(eq("ean", ean), eq("store.code", storeCode))).first();
         return Optional.ofNullable(document).map(this::documentToProduct);
     }
 
