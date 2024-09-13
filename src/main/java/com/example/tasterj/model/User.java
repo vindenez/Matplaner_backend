@@ -1,5 +1,6 @@
 package com.example.tasterj.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import jakarta.persistence.*;
@@ -25,7 +26,8 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference("user-savedRecipe")
     private List<SavedRecipe> savedRecipes;
 
 }
