@@ -270,7 +270,6 @@ public class RecipeService {
         if (!(authentication instanceof JwtAuthenticationToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
-
         String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
 
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));

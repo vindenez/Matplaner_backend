@@ -179,7 +179,7 @@ public class RecipeController {
 
     // Check if a recipe is saved
     @GetMapping("/save/is-saved")
-    public boolean isRecipeSaved(@RequestParam String userId, @RequestParam String recipeId) {
+    public boolean isRecipeSaved(@RequestParam String recipeId) {
         return recipeService.isRecipeSavedByUser(recipeId);
     }
 
