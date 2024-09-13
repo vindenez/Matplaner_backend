@@ -7,6 +7,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -62,7 +63,13 @@ public class ProductRepository {
     public Product documentToProduct(Document document) {
         Product product = new Product();
 
-        product.setId(document.getObjectId("_id").toHexString());
+        Object idField = document.get("_id");
+        if (idField instanceof ObjectId) {
+            product.setId(((ObjectId) idField).toHexString());
+        } else if (idField instanceof String) {
+            product.setId((String) idField);
+        }
+
         product.setEan(document.getString("ean"));
         product.setName(document.getString("name"));
 

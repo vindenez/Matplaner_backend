@@ -32,7 +32,7 @@ public class Product {
 
     @JsonProperty("weight_unit")
     private String weightUnit;
-    
+
     private Store store;
 
     @Getter

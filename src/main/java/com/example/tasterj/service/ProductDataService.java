@@ -6,7 +6,10 @@ import com.mongodb.client.MongoDatabase;
 import com.example.tasterj.model.Product;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -50,6 +53,7 @@ public class ProductDataService {
     // Scheduled to run every day at 7 AM
     @Scheduled(cron = "0 0 7 * * ?")
     public void scheduledFetchAndSaveProducts() {
+        migrateIdsToObjectId();
         fetchAndSaveProducts();
     }
 
@@ -151,5 +155,28 @@ public class ProductDataService {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    public void migrateIdsToObjectId() {
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        // Find all documents where _id is a string
+        List<Document> productsWithStringIds = collection.find(Filters.type("_id", "string")).into(new ArrayList<>());
+
+        for (Document product : productsWithStringIds) {
+            String stringId = product.getString("_id");
+
+            // Generate a new ObjectId from the string _id
+            ObjectId objectId = new ObjectId();
+
+            // Update the document to set the new ObjectId as _id
+            collection.updateOne(Filters.eq("_id", stringId), Updates.set("_id", objectId));
+
+            // You can also update the rest of the document here if needed
+            System.out.println("Updated product _id from string to ObjectId: " + objectId.toHexString());
+        }
+
+        System.out.println("Migration of string _id to ObjectId completed.");
     }
 }
