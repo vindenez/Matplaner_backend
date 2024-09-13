@@ -263,8 +263,11 @@ public class RecipeService {
 
         User user = userRepository.findBySupabaseUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return savedRecipeRepository.findByUser(user, pageable);
+
+        return savedRecipeRepository.findByUserWithRecipes(user, pageable);
     }
+
+
 
     @Transactional
     public boolean saveRecipeForUser(String recipeId) {

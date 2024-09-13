@@ -2,6 +2,7 @@ package com.example.tasterj.repository;
 
 import com.example.tasterj.model.Recipe;
 import com.example.tasterj.model.SavedRecipe;
+import com.example.tasterj.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
