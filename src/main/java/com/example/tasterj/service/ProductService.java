@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,35 +36,80 @@ public class ProductService {
 
 
     public Map<String, Object> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
-        Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
-
-        // Step 1: Create MongoDB filters for name, brand, vendor, store, and category
-        List<Bson> filters = new ArrayList<>();
-
-        // Filter by product name using regex for partial substring match
-        if (query != null && !query.isEmpty()) {
-            List<Bson> nameOrBrandFilters = new ArrayList<>();
-
-            // Check if product name or brand matches any of the substrings
-            for (String substring : querySubstrings) {
-                nameOrBrandFilters.add(Filters.regex("name", ".*" + substring + ".*", "i")); // Case-insensitive match
-                nameOrBrandFilters.add(Filters.regex("brand", ".*" + substring + ".*", "i")); // Case-insensitive match
-                nameOrBrandFilters.add(Filters.regex("vendor", ".*" + substring + ".*", "i"));
-                nameOrBrandFilters.add(Filters.regex("category.name", ".*" + substring + ".*", "i"));
-            }
-
-            filters.add(Filters.or(nameOrBrandFilters)); // Match any condition for name, brand, or category
+        if (query == null || query.isEmpty()) {
+            // Handle empty query case
+            Map<String, Object> response = new HashMap<>();
+            response.put("products", Collections.emptyList());
+            response.put("totalItems", 0);
+            response.put("totalPages", 0);
+            response.put("currentPage", page);
+            return response;
         }
 
-        // Step 2: Filter by selected stores if applicable
+        // Step 1: Split query into words
+        String[] words = query.toLowerCase().split("\\s+");
+
+        // Step 2: Generate all possible substrings
+        List<String> substrings = generateSubstrings(words);
+
+        // Step 3: Use MongoDB to find brands that match any of the substrings
+        List<Bson> brandFilters = substrings.stream()
+                .map(sub -> Filters.regex("brand", Pattern.compile("^" + Pattern.quote(sub) + "$", Pattern.CASE_INSENSITIVE)))
+                .collect(Collectors.toList());
+
+        Bson brandQuery = Filters.or(brandFilters);
+
+        // Find matching brands
+        List<String> matchingBrands = collection.distinct("brand", brandQuery, String.class)
+                .into(new ArrayList<>());
+
+        // Step 4: Identify the longest matching brand substring
+        String matchingBrand = null;
+        int maxBrandLength = 0;
+
+        for (String brand : matchingBrands) {
+            String brandLower = brand.toLowerCase();
+            if (substrings.contains(brandLower)) {
+                int length = brandLower.split("\\s+").length;
+                if (length > maxBrandLength) {
+                    maxBrandLength = length;
+                    matchingBrand = brand;
+                }
+            }
+        }
+
+        // Step 5: Remove brand words from query words
+        List<String> nameWords = new ArrayList<>(Arrays.asList(words));
+        if (matchingBrand != null) {
+            String[] brandWords = matchingBrand.toLowerCase().split("\\s+");
+            for (String word : brandWords) {
+                nameWords.remove(word);
+            }
+        }
+
+        // Step 6: Create filters for product name
+        List<Bson> nameFilters = nameWords.stream()
+                .map(word -> Filters.regex("name", Pattern.compile(Pattern.quote(word), Pattern.CASE_INSENSITIVE)))
+                .collect(Collectors.toList());
+
+        // Step 7: Combine filters
+        List<Bson> filters = new ArrayList<>();
+        if (!nameFilters.isEmpty()) {
+            filters.add(Filters.and(nameFilters));
+        }
+
+        if (matchingBrand != null) {
+            filters.add(Filters.regex("brand", Pattern.compile(Pattern.quote(matchingBrand), Pattern.CASE_INSENSITIVE)));
+        }
+
+        // Filter by selected stores if applicable
         if (selectedStores != null && !selectedStores.isEmpty()) {
             filters.add(Filters.in("store.name", selectedStores));
         }
 
-        // Step 3: Combine filters if any exist
         Bson combinedFilters = filters.isEmpty() ? new Document() : Filters.and(filters);
 
-        // Step 4: Query MongoDB with filters and implement pagination
+        // Query the database with pagination
         List<Product> filteredProducts = new ArrayList<>();
         MongoCursor<Document> cursor = collection.find(combinedFilters)
                 .skip((page - 1) * pageSize)
@@ -78,15 +124,15 @@ public class ProductService {
             cursor.close();
         }
 
-        // Step 5: Count total products that match the filters
+        // Count total products that match the filters
         long totalProducts = collection.countDocuments(combinedFilters);
 
-        // Step 6: Convert filtered products to Map<String, Object>
+        // Convert filtered products to Map<String, Object>
         List<Map<String, Object>> productMaps = filteredProducts.stream()
-                .map(this::convertProductToMap) // Assuming convertProductToMap returns the entire product information
+                .map(this::convertProductToMap)
                 .collect(Collectors.toList());
 
-        // Step 7: Create response with paginated products and metadata
+        // Create response with paginated products and metadata
         Map<String, Object> response = new HashMap<>();
         response.put("products", productMaps);
         response.put("totalItems", totalProducts);
@@ -94,6 +140,21 @@ public class ProductService {
         response.put("currentPage", page);
 
         return response;
+    }
+
+    private List<String> generateSubstrings(String[] words) {
+        List<String> substrings = new ArrayList<>();
+        for (int i = 0; i < words.length; i++) {
+            StringBuilder sb = new StringBuilder();
+            for (int j = i; j < words.length; j++) {
+                if (sb.length() > 0) {
+                    sb.append(" ");
+                }
+                sb.append(words[j]);
+                substrings.add(sb.toString());
+            }
+        }
+        return substrings;
     }
 
 
