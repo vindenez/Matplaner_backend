@@ -67,7 +67,6 @@ public class ProductDataService {
             while (hasMoreProducts) {
                 List<Product> allProducts = new ArrayList<>();
 
-                // Fetch products from all 60 pages before saving/updating to MongoDB
                 for (int i = 0; i < RATE_LIMIT && hasMoreProducts; i++, currentPage++) {
                     String productUrl = PRODUCT_URL + "?page=" + currentPage + "&size=100";
                     ResponseEntity<String> response = restTemplate.exchange(productUrl, HttpMethod.GET, entity, String.class);
@@ -80,7 +79,6 @@ public class ProductDataService {
                             allProducts.addAll(products);
                         }
 
-                        // If fewer than 100 products are fetched, assume no more products
                         if (products.size() < 100) {
                             hasMoreProducts = false;
                         }
@@ -124,13 +122,12 @@ public class ProductDataService {
                     .append("image", product.getImage())
                     .append("category", product.getCategory())
                     .append("description", product.getDescription())
-                    .append("currentPrice", product.getCurrentPrice())
-                    .append("currentUnitPrice", product.getCurrentUnitPrice())
+                    .append("current_price", product.getCurrentPrice())
+                    .append("current_unit_price", product.getCurrentUnitPrice())
                     .append("weight", product.getWeight())
-                    .append("weightUnit", product.getWeightUnit())
+                    .append("weight_unit", product.getWeightUnit())
                     .append("store", product.getStore()));
 
-            // Use upsert to either update or insert new product
             collection.updateOne(filter, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         }
 
