@@ -112,12 +112,43 @@ public class ProductService {
 
     private Map<String, Object> convertProductToMap(Product product) {
         Map<String, Object> productMap = new HashMap<>();
+
+        productMap.put("id", product.getId());
         productMap.put("ean", product.getEan());
         productMap.put("name", product.getName());
         productMap.put("brand", product.getBrand());
         productMap.put("vendor", product.getVendor());
+        productMap.put("url", product.getUrl());
+        productMap.put("image", product.getImage());
+        productMap.put("description", product.getDescription());
         productMap.put("current_price", product.getCurrentPrice());
-        productMap.put("store", product.getStore() != null ? product.getStore().getName() : null);
+        productMap.put("current_unit_price", product.getCurrentUnitPrice());
+        productMap.put("weight", product.getWeight());
+        productMap.put("weight_unit", product.getWeightUnit());
+
+        if (product.getStore() != null) {
+            Map<String, Object> storeMap = new HashMap<>();
+            storeMap.put("name", product.getStore().getName());
+            storeMap.put("code", product.getStore().getCode());
+            storeMap.put("url", product.getStore().getUrl());
+            storeMap.put("logo", product.getStore().getLogo());
+
+            productMap.put("store", storeMap);
+        }
+
+        if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+            List<Map<String, Object>> categoryList = new ArrayList<>();
+            for (Product.Category category : product.getCategory()) {
+                Map<String, Object> categoryMap = new HashMap<>();
+                categoryMap.put("id", category.getId());
+                categoryMap.put("depth", category.getDepth());
+                categoryMap.put("name", category.getName());
+                categoryList.add(categoryMap);
+            }
+            productMap.put("category", categoryList);
+        }
+
         return productMap;
     }
+
 }
