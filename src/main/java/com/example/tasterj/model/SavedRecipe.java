@@ -1,6 +1,7 @@
 package com.example.tasterj.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,14 +19,14 @@ public class SavedRecipe {
     @Column(name = "id", updatable = false, nullable = false)
     private String id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference("user-savedRecipe")
+    @JsonIgnoreProperties("savedRecipes")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "recipe_id", nullable = false)
-    @JsonBackReference("recipe-savedRecipe")
+    @JsonIgnoreProperties("savedByUsers")
     private Recipe recipe;
 
     @Column(name = "saved_at", nullable = false)

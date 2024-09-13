@@ -1,5 +1,6 @@
 package com.example.tasterj.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -56,7 +57,7 @@ public class Recipe {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL)
-    @JsonManagedReference("recipe-savedRecipe")
+    @JsonIgnore
     private List<SavedRecipe> savedByUsers;
 
     @Column(name = "stored_price", nullable = false)
