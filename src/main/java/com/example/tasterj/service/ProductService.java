@@ -35,23 +35,35 @@ public class ProductService {
 
 
     public Map<String, Object> searchProducts(String query, List<String> selectedStores, int page, int pageSize) {
-        // Step 1: Create MongoDB filters
+        Set<String> querySubstrings = new HashSet<>(generateSubstrings(query));
+
+        // Step 1: Create MongoDB filters for name, brand, vendor, store, and category
         List<Bson> filters = new ArrayList<>();
 
+        // Filter by product name using regex for partial substring match
         if (query != null && !query.isEmpty()) {
-            Bson nameFilter = Filters.regex("name", ".*" + query + ".*", "i"); // Case-insensitive name match
-            filters.add(nameFilter);
+            List<Bson> nameOrBrandFilters = new ArrayList<>();
+
+            // Check if product name or brand matches any of the substrings
+            for (String substring : querySubstrings) {
+                nameOrBrandFilters.add(Filters.regex("name", ".*" + substring + ".*", "i")); // Case-insensitive match
+                nameOrBrandFilters.add(Filters.regex("brand", ".*" + substring + ".*", "i")); // Case-insensitive match
+                nameOrBrandFilters.add(Filters.regex("vendor", ".*" + substring + ".*", "i"));
+                nameOrBrandFilters.add(Filters.regex("category.name", ".*" + substring + ".*", "i"));
+            }
+
+            filters.add(Filters.or(nameOrBrandFilters)); // Match any condition for name, brand, or category
         }
 
+        // Step 2: Filter by selected stores if applicable
         if (selectedStores != null && !selectedStores.isEmpty()) {
-            Bson storeFilter = Filters.in("store.name", selectedStores);
-            filters.add(storeFilter);
+            filters.add(Filters.in("store.name", selectedStores));
         }
 
-        // Step 2: Combine filters if any exist
+        // Step 3: Combine filters if any exist
         Bson combinedFilters = filters.isEmpty() ? new Document() : Filters.and(filters);
 
-        // Step 3: Query MongoDB with filters and implement pagination
+        // Step 4: Query MongoDB with filters and implement pagination
         List<Product> filteredProducts = new ArrayList<>();
         MongoCursor<Document> cursor = collection.find(combinedFilters)
                 .skip((page - 1) * pageSize)
@@ -66,15 +78,15 @@ public class ProductService {
             cursor.close();
         }
 
-        // Step 4: Count total products that match the filters
+        // Step 5: Count total products that match the filters
         long totalProducts = collection.countDocuments(combinedFilters);
 
-        // Step 5: Convert filtered products to Map<String, Object>
+        // Step 6: Convert filtered products to Map<String, Object>
         List<Map<String, Object>> productMaps = filteredProducts.stream()
-                .map(this::convertProductToMap)
+                .map(this::convertProductToMap) // Assuming convertProductToMap returns the entire product information
                 .collect(Collectors.toList());
 
-        // Step 6: Create response with paginated products and metadata
+        // Step 7: Create response with paginated products and metadata
         Map<String, Object> response = new HashMap<>();
         response.put("products", productMaps);
         response.put("totalItems", totalProducts);
@@ -83,6 +95,7 @@ public class ProductService {
 
         return response;
     }
+
 
     public Map<String, List<Map<String, Object>>> findMatches(List<Map<String, String>> ingredients) {
         Map<String, List<Map<String, Object>>> result = new HashMap<>();
@@ -101,6 +114,21 @@ public class ProductService {
 
         return result;
     }
+
+    private List<String> generateSubstrings(String query) {
+        String[] words = query.toLowerCase().split("\\s+");
+
+        List<String> substrings = new ArrayList<>();
+
+        for (int i = 0; i < words.length; i++) {
+            for (int j = i; j < words.length; j++) {
+                substrings.add(String.join(" ", Arrays.copyOfRange(words, i, j + 1)));
+            }
+        }
+
+        return substrings;
+    }
+
 
     public List<Product> fetchProductsForIngredients(List<Ingredient> ingredients) {
         return ingredients.stream()
