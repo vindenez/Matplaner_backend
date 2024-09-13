@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.tasterj.model.SavedRecipe;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -151,25 +152,24 @@ public class RecipeController {
 
     // Save a recipe for the user
     @PostMapping("/save")
-    public boolean saveRecipe(@RequestParam String userId, @RequestParam String recipeId) {
-        return recipeService.saveRecipeForUser(userId, recipeId);
+    public boolean saveRecipe(@RequestParam String recipeId) {
+        return recipeService.saveRecipeForUser(recipeId);
     }
 
     // Remove a saved recipe
     @DeleteMapping("/save/remove")
-    public boolean removeSavedRecipe(@RequestParam String userId, @RequestParam String recipeId) {
-        return recipeService.removeSavedRecipeForUser(userId, recipeId);
+    public boolean removeSavedRecipe(@RequestParam String recipeId) {
+        return recipeService.removeSavedRecipeForUser(recipeId);
     }
 
     // Fetch saved recipes for a user with pagination
     @GetMapping("/save/list")
     public ResponseEntity<Page<SavedRecipe>> getSavedRecipes(
-            @RequestParam String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<SavedRecipe> savedRecipes = recipeService.getSavedRecipesForUser(userId, pageable);
+        Page<SavedRecipe> savedRecipes = recipeService.getSavedRecipesForUser(pageable);
 
         if (savedRecipes.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -180,7 +180,7 @@ public class RecipeController {
     // Check if a recipe is saved
     @GetMapping("/save/is-saved")
     public boolean isRecipeSaved(@RequestParam String userId, @RequestParam String recipeId) {
-        return recipeService.isRecipeSavedByUser(userId, recipeId);
+        return recipeService.isRecipeSavedByUser(recipeId);
     }
 
     @GetMapping("/search")

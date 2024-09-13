@@ -227,7 +227,11 @@ public class RecipeService {
     @Transactional
     public void deleteRecipe(String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = null;
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
 
         if (authentication instanceof JwtAuthenticationToken) {
             JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
@@ -248,13 +252,27 @@ public class RecipeService {
         recipeRepository.delete(recipe);
     }
 
-    public Page<SavedRecipe> getSavedRecipesForUser(String userId, Pageable pageable) {
+    public Page<SavedRecipe> getSavedRecipesForUser(Pageable pageable) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         User user = userRepository.findBySupabaseUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return savedRecipeRepository.findByUser(user, pageable);
     }
 
-    public boolean saveRecipeForUser(String userId, String recipeId) {
+    public boolean saveRecipeForUser(String recipeId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
@@ -274,7 +292,14 @@ public class RecipeService {
         return false;
     }
 
-    public boolean removeSavedRecipeForUser(String userId, String recipeId) {
+    public boolean removeSavedRecipeForUser(String recipeId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
@@ -292,7 +317,14 @@ public class RecipeService {
         return false;
     }
 
-    public boolean isRecipeSavedByUser(String userId, String recipeId) {
+    public boolean isRecipeSavedByUser(String recipeId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
