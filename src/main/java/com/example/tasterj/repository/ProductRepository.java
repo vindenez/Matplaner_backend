@@ -65,23 +65,29 @@ public class ProductRepository {
         product.setId(document.getObjectId("_id").toHexString());
         product.setEan(document.getString("ean"));
         product.setName(document.getString("name"));
-        product.setBrand(document.getString("brand"));
-        product.setVendor(document.getString("vendor"));
-        product.setUrl(document.getString("url"));
-        product.setImage(document.getString("image"));
-        product.setDescription(document.getString("description"));
-        product.setCurrentPrice(document.getDouble("current_price"));
-        product.setCurrentUnitPrice(document.getDouble("current_unit_price"));
-        product.setWeight(document.getDouble("weight"));
-        product.setWeightUnit(document.getString("weight_unit"));
+
+        product.setBrand(document.getString("brand") != null ? document.getString("brand") : "");
+        product.setVendor(document.getString("vendor") != null ? document.getString("vendor") : "");
+        product.setUrl(document.getString("url") != null ? document.getString("url") : "");
+        product.setImage(document.getString("image") != null ? document.getString("image") : "");
+        product.setDescription(document.getString("description") != null ? document.getString("description") : "");
+
+        Double currentPrice = document.getDouble("current_price");
+        product.setCurrentPrice(currentPrice != null ? currentPrice : 0.0);
+
+        Double currentUnitPrice = document.getDouble("current_unit_price");
+        product.setCurrentUnitPrice(currentUnitPrice != null ? currentUnitPrice : 0.0);
+
+        product.setWeight(document.getDouble("weight") != null ? document.getDouble("weight") : 0.0);
+        product.setWeightUnit(document.getString("weight_unit") != null ? document.getString("weight_unit") : "");
 
         Document storeDoc = document.get("store", Document.class);
         if (storeDoc != null) {
             Product.Store store = new Product.Store();
-            store.setName(storeDoc.getString("name"));
-            store.setCode(storeDoc.getString("code"));
-            store.setUrl(storeDoc.getString("url"));
-            store.setLogo(storeDoc.getString("logo"));
+            store.setName(storeDoc.getString("name") != null ? storeDoc.getString("name") : "");
+            store.setCode(storeDoc.getString("code") != null ? storeDoc.getString("code") : "");
+            store.setUrl(storeDoc.getString("url") != null ? storeDoc.getString("url") : "");
+            store.setLogo(storeDoc.getString("logo") != null ? storeDoc.getString("logo") : "");
             product.setStore(store);
         }
 
@@ -90,9 +96,9 @@ public class ProductRepository {
             List<Product.Category> categories = new ArrayList<>();
             for (Document categoryDoc : categoryDocs) {
                 Product.Category category = new Product.Category();
-                category.setId(categoryDoc.getInteger("id"));
-                category.setDepth(categoryDoc.getInteger("depth"));
-                category.setName(categoryDoc.getString("name"));
+                category.setId(categoryDoc.getInteger("id") != null ? categoryDoc.getInteger("id") : 0);
+                category.setDepth(categoryDoc.getInteger("depth") != null ? categoryDoc.getInteger("depth") : 0);
+                category.setName(categoryDoc.getString("name") != null ? categoryDoc.getString("name") : "");
                 categories.add(category);
             }
             product.setCategory(categories);
@@ -100,4 +106,6 @@ public class ProductRepository {
 
         return product;
     }
+
+
 }
