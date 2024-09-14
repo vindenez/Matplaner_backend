@@ -30,34 +30,33 @@ public class ProductRepository {
 
     // Find a product by its EAN
     public Optional<Product> findByEan(String ean) {
-        Document document = collection.find(eq("ean", ean)).first();
+        Document document = collection.find(and(eq("ean", ean), gte("current_price", 1.0))).first();
         return Optional.ofNullable(document).map(this::documentToProduct);
     }
 
-    // Find all products that contain a specific keyword in their name
+    // Find all products that contain a specific keyword in their name, filtering out products with price below 1kr
     public List<Product> findByNameContaining(String name) {
         List<Product> products = new ArrayList<>();
-        for (Document document : collection.find(regex("name", name, "i"))) {
+        for (Document document : collection.find(and(regex("name", name, "i"), gte("current_price", 1.0)))) {
             products.add(documentToProduct(document));
         }
         return products;
     }
 
-    // Find all products from a specific store by store code
+    // Find all products from a specific store by store code, filtering out products with price below 1kr
     public List<Product> findByStoreCode(String storeCode) {
         List<Product> products = new ArrayList<>();
-        for (Document document : collection.find(eq("store.code", storeCode))) {
+        for (Document document : collection.find(and(eq("store.code", storeCode), gte("current_price", 1.0)))) {
             products.add(documentToProduct(document));
         }
         return products;
     }
 
-    // Find a product by EAN and store code
+    // Find a product by EAN and store code, filtering out products with price below 1kr
     public Optional<Product> findByEanAndStoreCode(String ean, String storeCode) {
-        Document document = collection.find(and(eq("ean", ean), eq("store.code", storeCode))).first();
+        Document document = collection.find(and(eq("ean", ean), eq("store.code", storeCode), gte("current_price", 1.0))).first();
         return Optional.ofNullable(document).map(this::documentToProduct);
     }
-
 
     // Utility: Convert a MongoDB Document to a Product object
     public Product documentToProduct(Document document) {
