@@ -68,4 +68,7 @@ public class Recipe {
 
     @Column(name = "price_last_updated")
     private LocalDateTime priceLastUpdated;
+
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
 }

@@ -80,15 +80,12 @@ public class RecipeController {
     }
 
 
-    // Create a new recipe
     @PostMapping("/create")
     public ResponseEntity<Recipe> createRecipe(@RequestPart("createRecipeDto") @Valid CreateRecipeDto createRecipeDto) {
         Recipe recipe = recipeService.createRecipe(createRecipeDto);
         return new ResponseEntity<>(recipe, HttpStatus.CREATED);
     }
 
-
-    // Update an existing recipe (only if owned by the user)
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> updateRecipe(
             @PathVariable String id,
@@ -97,6 +94,7 @@ public class RecipeController {
         Recipe updatedRecipe = recipeService.updateRecipe(id, updateRecipeDto);
         return new ResponseEntity<>(updatedRecipe, HttpStatus.OK);
     }
+
 
     // Delete a recipe (only if owned by the user)
     @DeleteMapping("/{id}")
@@ -191,10 +189,11 @@ public class RecipeController {
             @RequestParam(defaultValue = "0") double minPrice,
             @RequestParam(defaultValue = "10000") double maxPrice,
             @RequestParam(defaultValue = "date") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(required = false, defaultValue = "true") Boolean isPublic) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Recipe> recipes = recipeService.searchRecipes(query, 0, minPrice, maxPrice, sortBy, sortDirection, pageable);
+        Page<Recipe> recipes = recipeService.searchRecipes(query, minPrice, maxPrice, sortBy, sortDirection, pageable, isPublic);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 

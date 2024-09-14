@@ -141,6 +141,7 @@ public class RecipeService {
         recipe.setCurrentPrice(totalCurrentPrice[0]);
         recipe.setStoredPrice(totalCurrentPrice[0]);
         recipe.setPriceLastUpdated(LocalDateTime.now());
+        recipe.setPublic(createRecipeDto.isPublic());
 
         if (createRecipeDto.getImageUrl() != null && !createRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(createRecipeDto.getImageUrl());
@@ -218,6 +219,10 @@ public class RecipeService {
 
         if (updateRecipeDto.getImageUrl() != null && !updateRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(updateRecipeDto.getImageUrl());
+        }
+
+        if (updateRecipeDto.getIsPublic() != null) {
+            recipe.setPublic(updateRecipeDto.getIsPublic());
         }
 
         return recipeRepository.save(recipe);
@@ -348,7 +353,14 @@ public class RecipeService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Page<Recipe> searchRecipes(String query, int maxDistance, double minPrice, double maxPrice, String sortBy, String sortDirection, Pageable pageable) {
+    public Page<Recipe> searchRecipes(String query, double minPrice, double maxPrice, String sortBy, String sortDirection, Pageable pageable, Boolean isPublic) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
+
         Sort sort;
 
         if ("price".equalsIgnoreCase(sortBy)) {
@@ -366,13 +378,19 @@ public class RecipeService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
         try {
-            return (query == null || query.trim().isEmpty())
-                    ? recipeRepository.findAllWithPriceFilter(minPrice, maxPrice, sortedPageable)
-                    : recipeRepository.findByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+            if (isPublic != null && !isPublic) {
+                return recipeRepository.findUserPrivateRecipes(query, minPrice, maxPrice, userId, sortedPageable);
+            } else {
+                return (query == null || query.trim().isEmpty())
+                        ? recipeRepository.findPublicRecipesWithPriceFilter(minPrice, maxPrice, sortedPageable)
+                        : recipeRepository.findPublicByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Search failed", e);
         }
     }
+
+
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
         List<Product> products = productService.fetchProductsForIngredients(ingredients);

@@ -29,6 +29,14 @@ public interface RecipeRepository extends JpaRepository<Recipe, String>, JpaSpec
     @Query("SELECT r FROM Recipe r WHERE r.storedPrice BETWEEN :minPrice AND :maxPrice")
     Page<Recipe> findAllWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
 
-}
+
+    @Query("SELECT r FROM Recipe r JOIN r.tags t WHERE r.userId = :userId AND r.isPublic = false AND (LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(t) LIKE LOWER(CONCAT('%', :query, '%'))) AND r.storedPrice BETWEEN :minPrice AND :maxPrice")
+    Page<Recipe> findUserPrivateRecipes(@Param("query") String query, @Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, @Param("userId") String userId, Pageable pageable);
+
+    @Query("SELECT r FROM Recipe r WHERE r.isPublic = true AND r.storedPrice BETWEEN :minPrice AND :maxPrice")
+    Page<Recipe> findPublicRecipesWithPriceFilter(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);
+
+    @Query("SELECT r FROM Recipe r JOIN r.tags t WHERE (LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(t) LIKE LOWER(CONCAT('%', :query, '%'))) AND r.isPublic = true AND r.storedPrice BETWEEN :minPrice AND :maxPrice")
+    Page<Recipe> findPublicByNameOrTagsWithPriceFilter(@Param("query") String query, @Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice, Pageable pageable);}
 
 

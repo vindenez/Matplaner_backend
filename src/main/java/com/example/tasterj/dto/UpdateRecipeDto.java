@@ -42,5 +42,8 @@ public class UpdateRecipeDto {
 
     @JsonProperty("priceLastUpdated")
     private LocalDateTime priceLastUpdated;
+
+    @JsonProperty("isPublic")
+    private Boolean isPublic;
 }
 
