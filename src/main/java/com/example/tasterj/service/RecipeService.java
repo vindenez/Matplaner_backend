@@ -355,14 +355,13 @@ public class RecipeService {
     @Transactional(rollbackFor = Exception.class)
     public Page<Recipe> searchRecipes(String query, double minPrice, double maxPrice, String sortBy, String sortDirection, Pageable pageable, Boolean isPublic) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof JwtAuthenticationToken)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        String userId = null;
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
         }
 
-        String userId = ((JwtAuthenticationToken) authentication).getTokenAttributes().get("sub").toString();
-
         Sort sort;
-
         if ("price".equalsIgnoreCase(sortBy)) {
             sort = "desc".equalsIgnoreCase(sortDirection)
                     ? Sort.by("storedPrice").descending()
@@ -378,19 +377,18 @@ public class RecipeService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
         try {
-            if (isPublic != null && !isPublic) {
+            if (userId != null && isPublic != null && !isPublic) {
                 return recipeRepository.findUserPrivateRecipes(query, minPrice, maxPrice, userId, sortedPageable);
-            } else {
-                return (query == null || query.trim().isEmpty())
-                        ? recipeRepository.findPublicRecipesWithPriceFilter(minPrice, maxPrice, sortedPageable)
-                        : recipeRepository.findPublicByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
             }
+
+            return (query == null || query.trim().isEmpty())
+                    ? recipeRepository.findPublicRecipesWithPriceFilter(minPrice, maxPrice, sortedPageable)
+                    : recipeRepository.findPublicByNameOrTagsWithPriceFilter(query, minPrice, maxPrice, sortedPageable);
+
         } catch (Exception e) {
             throw new RuntimeException("Search failed", e);
         }
     }
-
-
 
     private void updateRecipePrice(Recipe recipe, List<Ingredient> ingredients) {
         List<Product> products = productService.fetchProductsForIngredients(ingredients);
