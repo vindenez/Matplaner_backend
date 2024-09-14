@@ -54,7 +54,7 @@ public class SecurityConfig {
                 "https://matplaner.no",
                 "https://www.matplaner.no",
                 "https://www.matplaner.no/"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
 
