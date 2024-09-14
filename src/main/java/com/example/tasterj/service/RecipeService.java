@@ -166,6 +166,7 @@ public class RecipeService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to update this recipe");
         }
 
+        // Update recipe fields if provided in DTO
         if (updateRecipeDto.getName() != null) {
             recipe.setName(updateRecipeDto.getName());
         }
@@ -179,11 +180,14 @@ public class RecipeService {
             recipe.setTags(updateRecipeDto.getTags());
         }
 
+        // Handle ingredients
         if (updateRecipeDto.getIngredients() != null) {
-            ingredientRepository.deleteByRecipeId(recipe.getId());
+            // First, clear the existing ingredients to handle orphan removal
+            recipe.getIngredients().clear();
 
             final double[] totalCurrentPrice = {0.0};
 
+            // Add new ingredients
             List<Ingredient> updatedIngredients = updateRecipeDto.getIngredients().stream().map(dto -> {
                 Ingredient ingredient = new Ingredient();
                 ingredient.setId(UUID.randomUUID().toString());
@@ -195,6 +199,7 @@ public class RecipeService {
                 ingredient.setStoreCode(dto.getStoreCode());
                 ingredient.setImage(dto.getImage());
 
+                // Fetch product for price calculation
                 Optional<Product> productOpt = productRepository.findByEanAndStoreCode(dto.getEan(), dto.getStoreCode());
                 if (productOpt.isPresent()) {
                     Product product = productOpt.get();
@@ -207,9 +212,13 @@ public class RecipeService {
                 return ingredient;
             }).collect(Collectors.toList());
 
-            recipe.setIngredients(updatedIngredients);
+            // Add updated ingredients to the recipe
+            recipe.getIngredients().addAll(updatedIngredients);
+
+            // Update current price
             recipe.setCurrentPrice(totalCurrentPrice[0]);
 
+            // Update stored price if significant change
             if (recipe.getStoredPrice() == 0 || Math.abs(totalCurrentPrice[0] - recipe.getStoredPrice()) > recipe.getStoredPrice() * 0.05) {
                 recipe.setStoredPrice(totalCurrentPrice[0]);
             }
@@ -217,16 +226,20 @@ public class RecipeService {
             recipe.setPriceLastUpdated(LocalDateTime.now());
         }
 
+        // Update image URL if provided
         if (updateRecipeDto.getImageUrl() != null && !updateRecipeDto.getImageUrl().isEmpty()) {
             recipe.setImageUrl(updateRecipeDto.getImageUrl());
         }
 
+        // Update public/private status
         if (updateRecipeDto.getIsPublic() != null) {
             recipe.setPublic(updateRecipeDto.getIsPublic());
         }
 
+        // Save and return the updated recipe
         return recipeRepository.save(recipe);
     }
+
 
 
     @Transactional
