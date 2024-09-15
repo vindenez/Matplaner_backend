@@ -16,8 +16,6 @@ import java.util.Optional;
 @Repository
 public interface SavedRecipeRepository extends JpaRepository<SavedRecipe, String> {
 
-    Page<SavedRecipe> findByUser(User user, Pageable pageable);
-
     Optional<SavedRecipe> findByUserAndRecipe(User user, Recipe recipe);
 
     @Query("SELECT sr FROM SavedRecipe sr JOIN FETCH sr.recipe WHERE sr.user = :user")

@@ -22,12 +22,7 @@ public class VoteController {
         this.userService = userService;
     }
 
-    /**
-     * Post a vote for a specific recipe by the logged-in user.
-     * @param recipeId - The ID of the recipe to vote for.
-     * @param upvote - Boolean for upvote (true) or downvote (false). Can be null to remove a vote.
-     * @return Response indicating success or failure of the vote.
-     */
+
     @PostMapping("/{recipeId}")
     public ResponseEntity<String> voteRecipe(
             @PathVariable String recipeId,
@@ -50,11 +45,7 @@ public class VoteController {
         }
     }
 
-    /**
-     * Get the recipe and associated votes (upvotes/downvotes) along with the user's vote status if logged in.
-     * @param recipeId - The ID of the recipe to fetch.
-     * @return RecipeWithVotesDto containing recipe details and vote information.
-     */
+
     @GetMapping("/{recipeId}")
     public ResponseEntity<?> getRecipeWithVotes(@PathVariable String recipeId) {
         try {
