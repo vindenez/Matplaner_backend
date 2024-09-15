@@ -46,7 +46,7 @@ public class RecipeController {
 
         if (authentication instanceof JwtAuthenticationToken) {
             JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-            userId = jwtAuth.getTokenAttributes().get("sub").toString(); // Assuming "sub" contains the userId
+            userId = jwtAuth.getTokenAttributes().get("sub").toString();
         }
 
         if (userId == null) {
@@ -89,11 +89,12 @@ public class RecipeController {
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> updateRecipe(
             @PathVariable String id,
-            @RequestPart("updateRecipeDto") @Valid UpdateRecipeDto updateRecipeDto) {
+            @RequestBody @Valid UpdateRecipeDto updateRecipeDto) {
 
         Recipe updatedRecipe = recipeService.updateRecipe(id, updateRecipeDto);
         return new ResponseEntity<>(updatedRecipe, HttpStatus.OK);
     }
+
 
 
     // Delete a recipe (only if owned by the user)
