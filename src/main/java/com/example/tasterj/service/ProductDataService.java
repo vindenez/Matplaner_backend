@@ -50,8 +50,8 @@ public class ProductDataService {
         }
     }
 
-    // Scheduled to run every day at 7 AM
-    @Scheduled(cron = "0 0 7 * * ?")
+    // Scheduled to run every day at 6 AM
+    @Scheduled(cron = "0 0 6 * * ?")
     public void scheduledFetchAndSaveProducts() {
         migrateIdsToObjectId();
         fetchAndSaveProducts();
