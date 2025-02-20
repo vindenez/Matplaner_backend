@@ -1,3 +1,3 @@
 # Matplaner
 
-For de som er glad i mat, men også er prisbevisst.
+For å dele og lage oppskrifter med oppdaterte priser.
